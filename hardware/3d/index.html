@@ -1,0 +1,1143 @@
+<meta charset="utf-8">
+<title>ANA V1 Glasses</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Interactive 3D model of the ANA V1 smart glasses: frame, hinges, HUD, both temple PCBs with every part, battery and wiring.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a studio stage for the 3D model up top (controls on the stage, part inspector beside it),
+   then the reference sheet below: features, weight, every part. Single dark look, like a bench light box. */
+:root {
+  color-scheme: dark;
+  --bg: #0c1115;
+  --panel: #121a20;
+  --panel-2: #172129;
+  --line: #24323c;
+  --fg: #e4ebf0;
+  --muted: #8d9fab;
+  --oled: #5fcdff;          /* the SSD1306's blue-cyan */
+  --gold: #d6b35c;          /* ENIG pad gold */
+  --warn: #ff8d6b;
+  --stage-a: #1b2731;
+  --stage-b: #090d10;
+  --display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.55; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1440px; margin: 0 auto; }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; padding-block: 18px 12px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 4.2vw, 46px); letter-spacing: 0.02em; line-height: 1; margin: 0; text-transform: uppercase; }
+h1 span { color: var(--oled); }
+.sub { color: var(--muted); margin: 0; max-width: 62ch; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 28px; letter-spacing: 0.03em; text-transform: uppercase; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 20px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 8px; color: var(--oled); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+
+/* ---------- stage ---------- */
+.studio { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; }
+.stage { position: relative; height: clamp(440px, 72vh, 860px); border-radius: 14px; overflow: hidden;
+  background: radial-gradient(120% 90% at 55% 35%, var(--stage-a), var(--stage-b)); border: 1px solid var(--line); }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.toolbar { position: absolute; z-index: 3; left: 12px; right: 12px; top: 12px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.toolbar .grp { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 10px; background: rgba(12, 17, 21, 0.72);
+  border: 1px solid var(--line); backdrop-filter: blur(6px); pointer-events: auto; }
+.toolbar button, .seg button { font: 500 13px/1 var(--body); color: var(--fg); background: transparent; border: 1px solid transparent;
+  border-radius: 7px; padding: 7px 10px; cursor: pointer; white-space: nowrap; }
+.toolbar button:hover { background: var(--panel-2); }
+.toolbar button[aria-pressed="true"] { background: var(--oled); color: #04131c; }
+.toolbar button:focus-visible, .seg button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.explode { position: absolute; z-index: 3; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px;
+  background: rgba(12, 17, 21, 0.72); border: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.explode input { width: min(220px, 40vw); accent-color: var(--oled); }
+.hint { position: absolute; z-index: 3; right: 12px; bottom: 12px; font-size: 12px; color: var(--muted); background: rgba(12, 17, 21, 0.6); padding: 6px 10px; border-radius: 8px; }
+.loading { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; font-family: var(--mono); color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+.tip { position: absolute; z-index: 4; pointer-events: none; padding: 8px 10px; border-radius: 8px; background: rgba(9, 13, 16, 0.92); border: 1px solid var(--line);
+  font-size: 12.5px; max-width: 280px; transform: translate(14px, 14px); }
+.tip b { font-family: var(--mono); color: var(--oled); font-weight: 500; }
+.lbl { font: 600 11.5px/1.2 var(--body); letter-spacing: 0.02em; color: var(--fg); background: rgba(9, 13, 16, 0.8); border: 1px solid var(--line);
+  padding: 3px 7px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
+.lbl::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--oled); margin-right: 6px; vertical-align: 1px; }
+
+.inspector { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.inspector .ref { font-family: var(--mono); font-size: 22px; color: var(--oled); }
+.inspector dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13.5px; }
+.inspector dt { color: var(--muted); }
+.inspector dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.inspector p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.legend { display: grid; gap: 6px; font-size: 13px; }
+.legend div { display: flex; gap: 8px; align-items: center; }
+.sw { width: 12px; height: 12px; border-radius: 3px; flex: none; border: 1px solid rgba(255,255,255,0.15); }
+
+/* ---------- sheet ---------- */
+section.sheet { padding-block: 38px 8px; border-top: 1px solid var(--line); margin-top: 34px; }
+.lead { color: var(--muted); max-width: 70ch; margin: 0 0 22px; }
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.feat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+.feat ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; }
+.feat li { padding-left: 2px; }
+.feat li::marker { color: var(--gold); }
+.where { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; background: var(--panel-2); position: sticky; top: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); white-space: nowrap; }
+tr.total td { font-weight: 600; color: var(--fg); border-bottom: none; background: var(--panel-2); }
+tr.sub td { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 13px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+summary { cursor: pointer; padding: 14px 18px; font-family: var(--display); font-size: 19px; letter-spacing: 0.04em; text-transform: uppercase; }
+details .tbl-wrap { border: none; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; max-height: 560px; }
+.note { color: var(--muted); font-size: 13.5px; max-width: 80ch; }
+.bar { height: 8px; border-radius: 4px; background: var(--oled); opacity: 0.8; }
+footer { padding-block: 30px 40px; color: var(--muted); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .studio { grid-template-columns: 1fr; }
+  .stage { height: clamp(380px, 64vh, 640px); }
+  .hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Project Spectra · V1.1 hardware · rev 1.0 boards</div>
+      <h1>ANA V1 <span>Glasses</span></h1>
+    </div>
+    <p class="sub">The finished prototype: wayfarer frame, OLED heads-up display, and the two temple PCBs with every part fitted. Drag to orbit, scroll to zoom, hover any part.</p>
+  </header>
+
+  <div class="studio">
+    <div class="stage" id="stage">
+      <div class="loading" id="loading">Loading the frame and both temple boards (11 MB)…</div>
+      <div class="toolbar" role="toolbar" aria-label="View controls">
+        <div class="grp" aria-label="Camera">
+          <button type="button" id="v-hero" aria-pressed="true">Assembled</button>
+          <button type="button" id="v-explode" aria-pressed="false">Exploded</button>
+          <button type="button" id="v-right" aria-pressed="false">Right temple PCB</button>
+          <button type="button" id="v-left" aria-pressed="false">Left temple PCB</button>
+          <button type="button" id="v-eye" aria-pressed="false">Wearer's view</button>
+        </div>
+        <div class="grp" aria-label="Covers">
+          <button type="button" id="c-solid" aria-pressed="false">Covers</button>
+          <button type="button" id="c-clear" aria-pressed="true">See-through</button>
+          <button type="button" id="c-off" aria-pressed="false">No covers</button>
+        </div>
+        <div class="grp" aria-label="States">
+          <button type="button" id="t-light" aria-pressed="true">Flashlight</button>
+          <button type="button" id="t-chg" aria-pressed="false">Charging</button>
+          <button type="button" id="t-hud" aria-pressed="true">HUD on</button>
+          <button type="button" id="t-lbl" aria-pressed="true">Labels</button>
+        </div>
+      </div>
+      <div class="explode"><label for="xp">Explode</label><input id="xp" type="range" min="0" max="1" step="0.01" value="0"></div>
+      <div class="hint">Drag: orbit · Right-drag: pan · Scroll: zoom · Click a part to pin it</div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+
+    <aside class="inspector" aria-live="polite">
+      <div class="eyebrow">Part inspector</div>
+      <div id="insp">
+        <div class="ref">Hover a part</div>
+        <p>Every resistor, capacitor and chip on both boards is clickable. The boards are the real KiCad layouts, exported with their copper, solder mask and silkscreen.</p>
+      </div>
+      <div class="legend" aria-label="Wire colours">
+        <div class="eyebrow">Frame-link wires</div>
+        <div><span class="sw" style="background:#d8352a"></span>1 VSYS (battery / USB power)</div>
+        <div><span class="sw" style="background:#f2f2f2"></span>2 LED_K (flashlight switch)</div>
+        <div><span class="sw" style="background:#1b1b1b"></span>3 GND</div>
+        <div><span class="sw" style="background:#f2c230"></span>4 EN (auto-reset)</div>
+        <div><span class="sw" style="background:#f08a24"></span>5 IO0 (boot select)</div>
+        <div><span class="sw" style="background:#3cb44b"></span>6 CHRG (charging status)</div>
+        <div><span class="sw" style="background:#3c7dd9"></span>7 ESP32 RX</div>
+        <div><span class="sw" style="background:#9a5bd6"></span>8 ESP32 TX</div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="sheet" id="features">
+    <div class="eyebrow">What it does</div>
+    <h2>Every feature, and where it lives</h2>
+    <p class="lead">Grouped by job. The monospace line under each item names the board and the part references, so you can find it in the 3D view, the schematic PDFs and the BOM.</p>
+    <div class="feat-grid">
+      <div class="feat"><h3>Heads-up display</h3><ul>
+        <li>0.96″ 128 × 64 SSD1306 OLED in a pod above the right lens, reflected to your eye by a 45° beam splitter.<div class="where">OLED module on J4 · 7 wires · SPI CLK 4, MOSI 23, CS 15, DC 26, RST 27</div></li>
+        <li>Shows the time and date, temperature, heart rate and SpO₂, battery % or USB/charging state, a flashlight marker and a footer line.<div class="where">firmware readSlowSensors() + drawScreen()</div></li>
+        <li>Drawn upside down in firmware so it reads correctly after the reflection.<div class="where">display.setRotation(2)</div></li>
+        <li>33 Ω series resistors on the SPI clock and data lines tame ringing on the 7-wire cable.<div class="where">ana-main R6, R7</div></li>
+      </ul></div>
+      <div class="feat"><h3>Brain and radio</h3><ul>
+        <li>ESP32-U4WDH: dual-core 240 MHz ESP32 with 4 MB flash inside the package, soldered straight to the board.<div class="where">ana-main U1 · 5 × 5 mm QFN-48</div></li>
+        <li>Bluetooth Classic serial to your phone; set the time with <span class="mono">T: dd/mm/yyyy hh:mm</span>.<div class="where">SerialBT "Genius_MRIDUL_G"</div></li>
+        <li>2.4 GHz ceramic chip antenna at the very end of the ear tip, with a tunable CLC match next to the chip.<div class="where">ana-main AE1, C15, L2, C16, R8 (C17, C18 not fitted)</div></li>
+        <li>40 MHz ±10 ppm crystal with 22 pF loads; EN RC delay and boot strap pull-ups as in Espressif's reference design.<div class="where">ana-main Y1, C13, C14, R2, C12, R3</div></li>
+      </ul></div>
+      <div class="feat"><h3>Sensing</h3><ul>
+        <li>Heart rate and SpO₂ from a MAX30102 on the skin side of the right temple, read at 400 samples/s, averaged over 5 beats.<div class="where">ana-main U4 · I²C 0x57 · INT on GPIO 5 · 1.8 V core LDO U5</div></li>
+        <li>Temperature and humidity from an SHT40 (±0.2 °C) on the top edge, away from the regulator and the ESP32.<div class="where">ana-main U6 · I²C 0x44 · no copper pour around it</div></li>
+        <li>Battery voltage through a 100 k / 100 k divider; above 4.4 V the firmware knows USB is plugged in.<div class="where">ana-main R9, R10, C23 → GPIO 33</div></li>
+        <li>Charging status from the TP4056, isolated by a Schottky diode so a switched-off ESP32 is never back-powered.<div class="where">ana-power D3 → link wire 6 → GPIO 13</div></li>
+      </ul></div>
+      <div class="feat"><h3>Touch and lights</h3><ul>
+        <li>Capacitive touch pad (10 × 4 mm copper) on the outer face of the right temple; tap through up to 2 mm of plastic.<div class="where">ana-main E1 + TTP223 U7 (toggle mode)</div></li>
+        <li>Each tap toggles the flashlight: one MOSFET switches the LEDs on both temples, and the ESP32 sees it on GPIO 14 and shows <span class="mono">*</span> on the HUD.<div class="where">ana-main Q2 (AO3400A), R20 · LED_K over link wire 2</div></li>
+        <li>White side-emitting LEDs at both hinge ends, plus pads for brighter LEDs at the frame corners (68 Ω already fitted).<div class="where">D1 / D5, R21 / R11 · EXT_LED pads J3 / J4 with R22 / R12</div></li>
+        <li>Red (charging) and green (full) indicator LEDs on the outer face of the left temple.<div class="where">ana-power D1, D2</div></li>
+      </ul></div>
+      <div class="feat"><h3>Power</h3><ul>
+        <li>USB-C on the bottom edge of the left temple; 5.1 kΩ CC resistors so any USB-C charger or C-to-C cable gives 5 V, and ESD protection on the data lines.<div class="where">ana-power J1, R1, R2, U1 (USBLC6)</div></li>
+        <li>TP4056 linear charger set to 44 mA (0.7 C for the 60 mAh cell).<div class="where">ana-power U2, R3 = 27 kΩ</div></li>
+        <li>Cell protection: over-charge 4.3 V, over-discharge 2.4 V, over-current and short-circuit cut-off.<div class="where">ana-power U3 (DW01A) + Q1 (FS8205A)</div></li>
+        <li>Power path: the glasses run from USB while it is plugged in, so the charger sees only the cell and stops at full.<div class="where">ana-power D4 (B5819WS), Q2 (AO3401A), R8</div></li>
+        <li>POWER slide switch drives a P-MOSFET; the tiny switch only carries gate current.<div class="where">ana-power SW1 → Q3, R9</div></li>
+        <li>3.3 V 600 mA LDO on the right temple, 1.8 V LDO for the MAX30102 core.<div class="where">ana-main U2 (AP2112K), U5 (XC6206)</div></li>
+      </ul></div>
+      <div class="feat"><h3>Flashing and audio</h3><ul>
+        <li>USB-C flashing like a devkit: CP2102N USB-serial plus DTR/RTS auto-reset; the Arduino IDE uploads with one click.<div class="where">ana-power U4 (CP2102N), Q5 (MMDT3904), R13–R17, C8–C10</div></li>
+        <li>Only RX, TX, EN and IO0 cross the frame; USB data stays on the left board.<div class="where">link wires 4, 5, 7, 8</div></li>
+        <li>BT slide switch powers your Bluetooth headset module from the protected cell (never from 5 V).<div class="where">ana-power SW2 → Q4, R10, C7 · BT_HEADSET pads J2</div></li>
+        <li>Bring-up pads on the ear tip for 3.3 V, GND, TX and RX.<div class="where">ana-main J2</div></li>
+      </ul></div>
+      <div class="feat"><h3>Boards and build</h3><ul>
+        <li>Two 4-layer, 0.8 mm boards cut to the temple shape (straight 104.5 mm, then 39.5 mm bent 30° down behind the ear).<div class="where">config/temple.json · 1132 mm² each</div></li>
+        <li>Solid ground plane on layer 2, all parts on one side, JLCPCB-assembled (55 + 44 parts).<div class="where">fab/ana-main, fab/ana-power</div></li>
+        <li>Checks: 0 ERC, 0 DRC errors, 0 unconnected, schematic and board match on both.<div class="where">drc.json / erc.json</div></li>
+        <li>8-wire frame link over the brow; 7-wire OLED cable; plated wire holes at 1.5 mm pitch.<div class="where">J1 (right) ↔ J3 (left)</div></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="weight">
+    <div class="eyebrow">Weight</div>
+    <h2>About 43 g on your face</h2>
+    <p class="lead">Board and cover figures are computed from the real outlines; parts come from datasheet or typical masses. The frame depends on what you make it from, so both common options are shown. Your Bluetooth headset module is not included.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Item</th><th>Basis</th><th class="num">Grams</th><th style="width:28%"></th></tr></thead>
+      <tbody id="wtable"></tbody>
+    </table></div>
+    <p class="note">Range: about 37 g with a 3D-printed front, thin lenses and 0.8 mm cover walls, up to about 48 g with a thick acetate front and glass lenses. Everyday acetate glasses weigh roughly 25–35 g. The right side (display pod, OLED and beam splitter) is about 3 g heavier than the left (battery), so the Bluetooth module hanging at the left ear evens the balance.</p>
+  </section>
+
+  <section class="sheet" id="parts">
+    <div class="eyebrow">Bill of materials</div>
+    <h2>Every part on both boards</h2>
+    <p class="lead">Straight from the KiCad boards and <span class="mono">circuits.py</span>. Parts marked “not fitted” are tuning spares; wire pads and the touch electrode are copper only.</p>
+    <div class="two">
+      <details open><summary>Right temple · ana-main</summary><div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Value</th><th>Job</th></tr></thead><tbody id="pl-main"></tbody></table></div></details>
+      <details open><summary>Left temple · ana-power</summary><div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Value</th><th>Job</th></tr></thead><tbody id="pl-power"></tbody></table></div></details>
+    </div>
+  </section>
+
+  <section class="sheet" id="fit">
+    <div class="eyebrow">Fit</div>
+    <h2>Openings the temple covers need</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Temple</th><th>Opening</th><th>Where (x from the hinge end)</th></tr></thead>
+      <tbody>
+        <tr><td>Right</td><td>MAX30102 window, must touch the skin</td><td class="mono">inner face, x 50–56 mm</td></tr>
+        <tr><td>Right</td><td>SHT40 vent slots</td><td class="mono">top edge, x 41–44 mm</td></tr>
+        <tr><td>Right</td><td>Touch area (no opening, ≤ 2 mm plastic)</td><td class="mono">outer face, x 26.5–36.5 mm</td></tr>
+        <tr><td>Both</td><td>Side LED window, wire exits</td><td class="mono">front (hinge) end</td></tr>
+        <tr><td>Left</td><td>USB-C port</td><td class="mono">bottom edge, x 16–25 mm</td></tr>
+        <tr><td>Left</td><td>POWER and BT switch levers</td><td class="mono">top edge, x 54 mm and 79.5 mm</td></tr>
+        <tr><td>Left</td><td>Charge LED windows (red, green)</td><td class="mono">outer face, x 40–43 mm</td></tr>
+        <tr><td>Left</td><td>LiPo bay, about 3.5 × 7 × 30 mm</td><td class="mono">ear tip, behind the bend</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <footer>Model built from hardware/ana-main and hardware/ana-power (KiCad 9). Frame, covers, display pod and optics are a representative design sized to config/temple.json; measure your own frame before printing covers.</footer>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const $ = (id) => document.getElementById(id);
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const loadingEl = $('loading');
+
+// ------------------------------------------------------------------ static tables (weight)
+const WEIGHT = [
+  ['Front frame, wayfarer, 146 × 49 mm', 'acetate 1.28 g/cm³ (3D-printed PLA ≈ 9 g)', 12.0],
+  ['Lenses ×2, plano 1.5 mm', 'polycarbonate 1.20 g/cm³', 3.2],
+  ['Hinges ×2 with screws', 'steel barrel hinges', 1.0],
+  ['Temple covers ×2', 'printed shell, 1.0 mm walls (computed 4 250 mm³ each)', 10.5],
+  ['Right PCB, bare', '4-layer FR-4 0.8 mm, 1132 mm², copper and mask', 2.4],
+  ['Right PCB parts and solder', '55 parts: ESP32, sensors, LDOs, passives', 0.5],
+  ['Left PCB, bare', 'same outline', 2.4],
+  ['Left PCB parts and solder', 'USB-C 0.6 g, 2 switches, CP2102N, TP4056 …', 1.4],
+  ['LiPo cell, ~60 mAh', '≈ 3.5 × 7 × 30 mm pouch', 1.6],
+  ['OLED module, 0.96″ SPI', 'board + glass, header pins removed', 3.0],
+  ['Display pod and bracket', 'printed, 1 mm walls', 1.5],
+  ['Beam splitter', 'acrylic 26 × 32 × 1 mm', 1.0],
+  ['Wiring', '8-wire link 18 cm, 7-wire OLED 8 cm, LED/BT leads, sleeve', 1.3],
+  ['Corner LEDs ×2, screws, glue', '', 0.8],
+];
+{
+  const tb = $('wtable'); let sum = 0; const max = Math.max(...WEIGHT.map(w => w[2]));
+  for (const [a, b, g] of WEIGHT) {
+    sum += g;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a}</td><td class="note">${b}</td><td class="num">${g.toFixed(1)}</td><td><div class="bar" style="width:${(g / max * 100).toFixed(0)}%"></div></td>`;
+    tb.appendChild(tr);
+  }
+  const tr = document.createElement('tr'); tr.className = 'total';
+  tr.innerHTML = `<td>Total, as worn</td><td>without your Bluetooth headset module (add 3–6 g)</td><td class="num">${sum.toFixed(1)}</td><td></td>`;
+  tb.appendChild(tr);
+}
+
+// ------------------------------------------------------------------ renderer, scene
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.inset = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+labelRenderer.domElement.style.zIndex = '1';
+stage.appendChild(labelRenderer.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(30, 1, 1, 5000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 40;
+controls.maxDistance = 900;
+
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(120, 260, 180);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -220, right: 220, top: 220, bottom: -220, near: 10, far: 700 });
+key.shadow.bias = -0.0004;
+key.shadow.radius = 4;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fd8ff, 1.0);
+rim.position.set(-200, 80, -220);
+scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xdfefff, 0x1a1410, 0.55));
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.ShadowMaterial({ opacity: 0.32 }));
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -34;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ------------------------------------------------------------------ materials
+const M = {
+  acetate: new THREE.MeshPhysicalMaterial({ color: 0x050506, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.18, metalness: 0, envMapIntensity: 0.35 }),
+  coverSolid: new THREE.MeshPhysicalMaterial({ color: 0x0b0c0d, roughness: 0.6, clearcoat: 0.3, clearcoatRoughness: 0.4, envMapIntensity: 0.35 }),
+  coverClear: new THREE.MeshPhysicalMaterial({ color: 0x5d6d78, roughness: 0.12, metalness: 0, transparent: true, opacity: 0.2,
+                                                depthWrite: false, clearcoat: 1, side: THREE.DoubleSide }),
+  lens: new THREE.MeshPhysicalMaterial({ color: 0xdfefff, roughness: 0.04, metalness: 0, transparent: true, opacity: 0.1,
+                                         clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.4, depthWrite: false }),
+  metal: new THREE.MeshStandardMaterial({ color: 0xc9cdd3, metalness: 1, roughness: 0.25 }),
+  darkMetal: new THREE.MeshStandardMaterial({ color: 0x5b6067, metalness: 1, roughness: 0.4 }),
+  ic: new THREE.MeshStandardMaterial({ color: 0x141517, roughness: 0.55 }),
+  white: new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.5 }),
+  ceramic: new THREE.MeshStandardMaterial({ color: 0x23272b, roughness: 0.4 }),
+  sensorGlass: new THREE.MeshPhysicalMaterial({ color: 0x0b1a22, roughness: 0.05, metalness: 0.2, clearcoat: 1 }),
+  oledPcb: new THREE.MeshStandardMaterial({ color: 0x1b4f8f, roughness: 0.45 }),
+  oledGlass: new THREE.MeshPhysicalMaterial({ color: 0x050607, roughness: 0.08, clearcoat: 1 }),
+  combiner: new THREE.MeshPhysicalMaterial({ color: 0xbfe6ff, roughness: 0.03, transparent: true, opacity: 0.22, metalness: 0.1,
+                                             clearcoat: 1, side: THREE.DoubleSide, depthWrite: false }),
+  pouch: new THREE.MeshStandardMaterial({ color: 0xb9bcc2, metalness: 0.8, roughness: 0.38 }),
+  kapton: new THREE.MeshStandardMaterial({ color: 0xd99a22, roughness: 0.35, transparent: true, opacity: 0.85 }),
+  sleeve: new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.85 }),
+  solder: new THREE.MeshStandardMaterial({ color: 0xd8dade, metalness: 1, roughness: 0.18 }),
+  copperWire: new THREE.MeshStandardMaterial({ color: 0xc87533, metalness: 1, roughness: 0.3 }),
+  bt: new THREE.MeshPhysicalMaterial({ color: 0x1c1f24, roughness: 0.4, clearcoat: 0.6 }),
+  glow: null,
+};
+const ledMat = (color) => new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: color, emissiveIntensity: 0, roughness: 0.2 });
+const WRAP = 0.0016;                              // frame wrap: z = -WRAP * x²
+
+// ------------------------------------------------------------------ helpers
+function smoothClosed(pts, n = 220) {
+  const c = new THREE.CatmullRomCurve3(pts.map(p => V(p[0], p[1], 0)), true, 'centripetal');
+  return c.getSpacedPoints(n).slice(0, n).map(v => new THREE.Vector2(v.x, v.y));
+}
+function wrapGeo(g, k = WRAP) {
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) - k * p.getX(i) * p.getX(i));
+  g.computeVertexNormals();
+  return g;
+}
+function mesh(geo, mat, shadow = true) {
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = shadow; m.receiveShadow = shadow;
+  return m;
+}
+const pickables = [];
+function pickable(obj, info) {
+  obj.userData.info = info;
+  pickables.push(obj);
+  return obj;
+}
+const labels = [];
+function label(obj, text, offset = V(0, 0, 0), detail = false) {
+  const el = document.createElement('div');
+  el.className = 'lbl';
+  el.textContent = text;
+  const l = new CSS2DObject(el);
+  l.position.copy(offset);
+  l.userData.detail = detail;
+  obj.add(l);
+  labels.push(l);
+  return l;
+}
+const explodables = [];
+function explodable(obj, dir) {
+  obj.userData.base = obj.position.clone();
+  obj.userData.dir = dir;
+  explodables.push(obj);
+  return obj;
+}
+
+// ------------------------------------------------------------------ HUD texture (128 x 64 OLED, scaled x4)
+const hudCanvas = document.createElement('canvas');
+hudCanvas.width = 512; hudCanvas.height = 256;
+const hudTex = new THREE.CanvasTexture(hudCanvas);
+hudTex.colorSpace = THREE.SRGBColorSpace;
+hudTex.anisotropy = 8;
+const state = { light: true, charging: false, hud: true, labels: true, cover: 'clear', explode: 0 };
+function drawHud() {
+  const c = hudCanvas.getContext('2d');
+  c.fillStyle = '#000'; c.fillRect(0, 0, 512, 256);
+  if (!state.hud) { hudTex.needsUpdate = true; return; }
+  c.fillStyle = '#5fcdff';
+  c.font = '500 30px "IBM Plex Mono", monospace';
+  c.textBaseline = 'top';
+  const centre = (s, y) => c.fillText(s, (512 - c.measureText(s).width) / 2, y);
+  centre('18:45', 2);
+  const pwr = state.charging ? 'CHG' : '87%';
+  c.fillText(pwr, 512 - c.measureText(pwr).width - 4, 2);
+  if (state.light) c.fillText('*', 6, 2);
+  centre('08/11/2026', 42);
+  centre('Temp: 24.6 C', 90);
+  centre('BPM: 72 SpO2: 98', 154);
+  centre('Master Mridul!', 220);
+  hudTex.needsUpdate = true;
+}
+
+// ------------------------------------------------------------------ front frame (wayfarer)
+const OUTER = [[-72.5, 25.5], [-55, 24.2], [-30, 23.3], [0, 22.9], [30, 23.3], [55, 24.2], [72.5, 25.5], [74, 19], [73.3, 8],
+  [71, -2], [66.5, -13.5], [59, -21.5], [47, -25.2], [33, -25.6], [20, -22.6], [13.5, -15], [9.8, -5], [6.5, 3.5], [0, 5.8],
+  [-6.5, 3.5], [-9.8, -5], [-13.5, -15], [-20, -22.6], [-33, -25.6], [-47, -25.2], [-59, -21.5], [-66.5, -13.5], [-71, -2],
+  [-73.3, 8], [-74, 19]];
+const LENS_R = [[-61, 13], [-54, 16.8], [-36, 17.6], [-18, 16.6], [-11.5, 12], [-10.6, 2], [-12.8, -10], [-19.5, -17.6],
+  [-34, -20.2], [-48, -18.2], [-57, -10.5], [-61, 1.5]];
+const LENS_L = LENS_R.map(([x, y]) => [-x, y]).reverse();
+const glasses = new THREE.Group();
+scene.add(glasses);
+const front = new THREE.Group();
+glasses.add(front);
+{
+  const sh = new THREE.Shape(smoothClosed(OUTER, 300));
+  sh.holes.push(new THREE.Path(smoothClosed(LENS_R)), new THREE.Path(smoothClosed(LENS_L)));
+  const g = new THREE.ExtrudeGeometry(sh, { depth: 4.6, bevelEnabled: true, bevelThickness: 0.7, bevelSize: 0.7, bevelSegments: 4, curveSegments: 4 });
+  g.translate(0, 0, -2.3);
+  const frameMesh = pickable(mesh(wrapGeo(g), M.acetate), { ref: 'Frame', value: 'Wayfarer front, 146 × 49 mm', desc: 'Acetate or 3D-printed front. The 8-wire frame link runs along its top edge, inside a black sleeve.' });
+  front.add(frameMesh);
+  label(frameMesh, 'Wayfarer front', V(0, -31, 5));
+  for (const [pts, side] of [[LENS_R, -1], [LENS_L, 1]]) {
+    const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    const lp = smoothClosed(pts.map(([x, y]) => [cx + (x - cx) * 1.012, cy + (y - cy) * 1.012]));
+    const lg = new THREE.ExtrudeGeometry(new THREE.Shape(lp), { depth: 1.0, bevelEnabled: true, bevelThickness: 0.25, bevelSize: 0.2, bevelSegments: 2 });
+    lg.translate(0, 0, -0.5);
+    const lens = mesh(wrapGeo(lg), M.lens, false);
+    pickable(lens, { ref: side < 0 ? 'Right lens' : 'Left lens', value: 'Plano 1.5 mm', desc: 'Clear lens (or your prescription). The HUD beam splitter sits in front of the outer half of the right lens.' });
+    explodable(lens, V(0, 0, 16));
+    front.add(lens);
+  }
+  // nose pads (molded)
+  for (const s of [-1, 1]) {
+    const np = mesh(new RoundedBoxGeometry(3.2, 9, 2.4, 3, 1.1), M.acetate);
+    np.position.set(s * 11.4, -8.5, -3.9 - WRAP * 130);
+    np.rotation.set(0.25, s * 0.5, s * -0.3);
+    front.add(np);
+  }
+  // end pieces and frame-side hinge knuckles
+  for (const s of [-1, 1]) {
+    const ep = mesh(new RoundedBoxGeometry(7.5, 15, 13, 4, 2.3), M.acetate);
+    ep.position.set(s * 70.3, 17, -11.5);
+    front.add(ep);
+    for (const y of [13.1, 18.9]) {
+      const k = mesh(new THREE.CylinderGeometry(1.35, 1.35, 2.3, 24), M.metal);
+      k.position.set(s * 70, y, -18.6);
+      front.add(k);
+    }
+    const screw = mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.5, 24), M.metal);
+    screw.position.set(s * 70, 20.3, -18.6);
+    front.add(screw);
+    const slot = mesh(new THREE.BoxGeometry(1.6, 0.2, 0.25), M.darkMetal, false);
+    slot.position.set(s * 70, 20.6, -18.6);
+    front.add(slot);
+    const hinge = new THREE.Mesh(new THREE.BoxGeometry(4, 10, 4), new THREE.MeshBasicMaterial({ visible: false }));
+    hinge.position.set(s * 70, 16, -18.6);
+    pickable(hinge, { ref: 'Hinge', value: 'Steel barrel hinge, 3 knuckles', desc: 'The two wire bundles pass over the hinge inside the sleeve, with a loop of slack so the temple can fold.' });
+    front.add(hinge);
+    if (s < 0) label(hinge, 'Hinge', V(-4, 4, 0), true);
+  }
+}
+
+// ------------------------------------------------------------------ temples
+const temples = {};
+const BASIS = new THREE.Matrix4().makeBasis(V(0, 0, -1), V(1, 0, 0), V(0, -1, 0));   // (u, h, v) -> world
+function makeTemple(name, x0, data) {
+  const outer = new THREE.Group();                 // moved by the explode slider
+  const inner = new THREE.Group();                 // board coordinates: x = u (along), y = h (out of the parts side), z = v (down)
+  inner.quaternion.setFromRotationMatrix(BASIS);
+  inner.position.set(x0, 21.7, -21.3);
+  outer.add(inner);
+  glasses.add(outer);
+  // cover shell: board outline + 0.3 mm clearance + 1.0 mm wall, 6.8 mm thick, 0.6 mm bevel
+  const sh = new THREE.Shape(data.cover.map(([u, v]) => new THREE.Vector2(u, v)));
+  const g = new THREE.ExtrudeGeometry(sh, { depth: 5.6, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 4 });
+  g.rotateX(Math.PI / 2);
+  g.translate(0, 5.3, 0);
+  const cover = mesh(g, M.coverClear, false);
+  cover.renderOrder = 5;
+  pickable(cover, { ref: name === 'ana-main' ? 'Right temple cover' : 'Left temple cover', value: 'Printed shell, 6.8 mm thick',
+    desc: 'Inside: 105 + 40 mm, 10 / 8 / 7 mm tall, 5 mm thick (config/temple.json). The PCB slides in from the hinge end.' });
+  const coverGroup = new THREE.Group();
+  coverGroup.add(cover);
+  inner.add(coverGroup);
+  // temple-side hinge knuckle and its tongue
+  const kn = mesh(new THREE.CylinderGeometry(1.35, 1.35, 2.3, 24), M.metal);
+  kn.rotation.x = Math.PI / 2;
+  kn.position.set(-2.7, 2.5, 5.7);
+  inner.add(kn);
+  const tongue = mesh(new RoundedBoxGeometry(3.2, 2.6, 2.6, 2, 0.6), M.acetate);
+  tongue.position.set(-1.2, 2.5, 5.7);
+  coverGroup.add(tongue);
+  temples[name] = { outer, inner, cover, coverGroup, board: null, decals: [] };
+  return temples[name];
+}
+
+// procedural bodies for parts that have no KiCad 3D model
+function topTexture(draw, w = 256, h = 256) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+function topPlane(w, d, tex, y) {
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5 }));
+  p.rotation.x = -Math.PI / 2;
+  p.position.y = y + 0.003;
+  return p;
+}
+const TOP = 0.795;                                 // board top surface (mm above the bottom)
+const ledMats = { side: [], corner: [], red: null, green: null, front: [] };
+function procedural(t, p, board) {
+  const g = new THREE.Group();
+  g.position.set(p.x, TOP, p.y);
+  g.rotation.y = p.rot * Math.PI / 180;
+  const box = (w, h, d, mat, x = 0, y = 0, z = 0, r = 0) => {
+    const m = mesh(r ? new RoundedBoxGeometry(w, h, d, 2, r) : new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y + h / 2, z);
+    g.add(m);
+    return m;
+  };
+  if (p.ref === 'U1' && board === 'ana-main') {           // ESP32-U4WDH, QFN-48 5 x 5 x 0.85
+    box(5, 0.85, 5, M.ic, 0, 0, 0, 0.05);
+    g.add(topPlane(4.9, 4.9, topTexture((c, w, h) => {
+      c.fillStyle = '#16171a'; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#9a9ea6'; c.font = '600 30px "IBM Plex Mono", monospace'; c.textAlign = 'center';
+      c.fillText('ESP32', w / 2, 100); c.font = '500 26px "IBM Plex Mono", monospace'; c.fillText('U4WDH', w / 2, 140);
+      c.font = '400 20px "IBM Plex Mono", monospace'; c.fillText('ESPRESSIF', w / 2, 185);
+      c.beginPath(); c.arc(28, 28, 10, 0, 7); c.fill();
+    }), 0.85));
+    for (let i = 0; i < 12; i++) for (const [sx, sz, rot] of [[-1, 0, 0], [1, 0, 0], [0, -1, 1], [0, 1, 1]]) {
+      const pos = -1.925 + i * 0.35;
+      const pad = mesh(new THREE.BoxGeometry(rot ? 0.2 : 0.35, 0.2, rot ? 0.35 : 0.2), M.solder, false);
+      pad.position.set(sx ? sx * 2.45 : pos, 0.1, sz ? sz * 2.45 : pos);
+      g.add(pad);
+    }
+  } else if (p.ref === 'U4' && board === 'ana-main') {    // MAX30102 OLGA-14 3.3 x 5.6 x 1.55, rotated 90
+    box(3.3, 1.55, 5.6, M.ic, 0, 0, 0, 0.08);
+    g.add(topPlane(3.2, 5.5, topTexture((c, w, h) => {
+      c.fillStyle = '#121315'; c.fillRect(0, 0, w, h);
+      const win = (x, y, ww, hh) => { const gr = c.createLinearGradient(x, y, x + ww, y + hh); gr.addColorStop(0, '#26404c'); gr.addColorStop(1, '#0c1820'); c.fillStyle = gr; c.fillRect(x, y, ww, hh); };
+      win(40, 30, 176, 150); win(52, 250, 152, 120);
+      c.fillStyle = '#7a1b1b'; c.fillRect(88, 70, 26, 26); c.fillStyle = '#3a2a5a'; c.fillRect(140, 70, 26, 26);
+      c.fillStyle = '#6a6f78'; c.fillRect(94, 290, 68, 44);
+    }, 256, 434), 1.55));
+  } else if (p.ref === 'U6' && board === 'ana-main') {    // SHT40 DFN-4 1.5 x 1.5 x 0.5
+    box(1.5, 0.5, 1.5, M.white, 0, 0, 0, 0.05);
+    const hole = mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.02, 20), M.ic, false);
+    hole.position.set(0, 0.51, 0);
+    g.add(hole);
+  } else if (p.ref === 'AE1') {                           // Yageo ANT3216 chip antenna 3.2 x 1.6 x 1.1
+    box(2.4, 1.1, 1.6, M.ceramic, 0, 0, 0, 0.05);
+    box(0.4, 1.1, 1.6, M.solder, -1.4); box(0.4, 1.1, 1.6, M.solder, 1.4);
+  } else if (p.ref === 'D1' && p.fp.startsWith('LED_SideView') || p.ref === 'D5') {   // side-view white LED
+    box(1.1, 0.75, 1.6, M.white, 0.175, 0, 0, 0.05);
+    const lensM = ledMat(0xfff4dc);
+    const l = mesh(new THREE.BoxGeometry(0.05, 0.55, 1.2), lensM, false);
+    l.position.set(0.73, 0.38, 0);
+    g.add(l);
+    ledMats.side.push(lensM);
+  } else if (p.ref === 'J1' && board === 'ana-power') {   // HRO TYPE-C-31-M-12, mouth towards the bottom edge (+z)
+    const rr = (w, h, r) => { const s = new THREE.Shape(); s.moveTo(-w / 2 + r, -h / 2); s.lineTo(w / 2 - r, -h / 2); s.absarc(w / 2 - r, -h / 2 + r, r, -Math.PI / 2, 0);
+      s.lineTo(w / 2, h / 2 - r); s.absarc(w / 2 - r, h / 2 - r, r, 0, Math.PI / 2); s.lineTo(-w / 2 + r, h / 2); s.absarc(-w / 2 + r, h / 2 - r, r, Math.PI / 2, Math.PI);
+      s.lineTo(-w / 2, -h / 2 + r); s.absarc(-w / 2 + r, -h / 2 + r, r, Math.PI, 1.5 * Math.PI); return s; };
+    const shell = rr(8.94, 3.16, 1.5);
+    shell.holes.push(rr(8.34, 2.56, 1.2));
+    const sg = new THREE.ExtrudeGeometry(shell, { depth: 7.35, bevelEnabled: false, curveSegments: 10 });
+    const sm = mesh(sg, M.metal);
+    sm.position.set(0, 1.58, -3.0);
+    g.add(sm);
+    const back = mesh(new THREE.ExtrudeGeometry(rr(8.34, 2.56, 1.2), { depth: 0.3, bevelEnabled: false }), M.ic);
+    back.position.set(0, 1.58, -2.9);
+    g.add(back);
+    box(6.6, 0.7, 4.6, M.ic, 0, 1.23, 1.5);
+    for (let i = 0; i < 12; i++) { const c = mesh(new THREE.BoxGeometry(0.25, 0.72, 2.8), M.solder, false); c.position.set(-2.75 + i * 0.5, 1.58, 2.3); g.add(c); }
+  } else if (p.ref === 'SW1' || p.ref === 'SW2') {        // MSK12C02 slide switch, lever out past the top edge
+    box(6.7, 0.9, 2.6, M.ic, 0, 0, 0);
+    box(6.7, 0.5, 2.6, M.metal, 0, 0.9, 0);
+    const lever = box(1.2, 0.9, 2.5, M.ic, 0.75, 0.25, 2.5, 0.2);
+    lever.userData.lever = true;
+  } else {
+    return null;
+  }
+  t.inner.add(g);
+  return g;
+}
+
+// hover boxes for every footprint
+function partHeight(p) {
+  if (/^Wire|^Test|^Battery|^Touch/.test(p.fp)) return 0.15;
+  if (p.ref === 'J1' && p.fp.startsWith('USB')) return 3.3;
+  if (/^SW/.test(p.ref)) return 1.6;
+  if (/OLGA|QFN|SOT|SO|HSOP|Crystal/.test(p.fp)) return 1.2;
+  return 0.6;
+}
+function hitBoxes(t, list, board) {
+  for (const p of list) {
+    const [x0, y0, x1, y1] = p.bbox;
+    const h = partHeight(p);
+    const back = p.back;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(Math.max(x1 - x0, 0.6), h, Math.max(y1 - y0, 0.6)), new THREE.MeshBasicMaterial({ visible: false }));
+    b.position.set((x0 + x1) / 2, back ? -h / 2 : TOP + h / 2, (y0 + y1) / 2);
+    pickable(b, { ref: p.ref, value: p.value, desc: p.desc || p.block, block: p.block, mpn: p.mpn, lcsc: p.lcsc, dnp: p.dnp,
+      board: board === 'ana-main' ? 'Right temple · ana-main' : 'Left temple · ana-power' });
+    t.inner.add(b);
+  }
+}
+
+// ------------------------------------------------------------------ frame-level parts
+const right = { pod: null };
+function buildDisplay() {
+  const pod = new THREE.Group();
+  front.add(pod);
+  // pod housing above the outer half of the right lens, open underneath
+  const shellM = M.coverClear;
+  const top = mesh(new RoundedBoxGeometry(32, 2.2, 31, 3, 0.9), M.acetate);
+  top.position.set(-47, 33.6, 12.5);
+  pod.add(top);
+  const walls = new THREE.Group();
+  for (const [w, d, x, z] of [[32, 1.2, -47, -2.4], [32, 1.2, -47, 27.4], [1.2, 31, -62.4, 12.5], [1.2, 31, -31.6, 12.5]]) {
+    const m = mesh(new RoundedBoxGeometry(w, 6.5, d, 2, 0.4), shellM);
+    m.position.set(x, 29.7, z);
+    walls.add(m);
+  }
+  pod.add(walls);
+  right.podWalls = walls;
+  // bracket to the right end piece
+  const br = mesh(new RoundedBoxGeometry(14, 3, 16, 3, 1.2), M.acetate);
+  br.position.set(-68, 27.4, -6);
+  pod.add(br);
+  // OLED module: blue board, glass facing down, 7-pin header at the back edge
+  const mod = new THREE.Group();
+  mod.position.set(-47, 31.2, 12.5);
+  const pcb = mesh(new THREE.BoxGeometry(27.3, 1.0, 27.8), M.oledPcb);
+  mod.add(pcb);
+  const glass = mesh(new THREE.BoxGeometry(26.7, 1.4, 19.3), M.oledGlass);
+  glass.position.set(0, -1.2, 1.2);
+  mod.add(glass);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(21.74, 10.86), new THREE.MeshBasicMaterial({ map: hudTex, toneMapped: false }));
+  scr.rotation.x = Math.PI / 2;
+  scr.position.set(0, -1.92, 1.6);
+  mod.add(scr);
+  for (let i = 0; i < 7; i++) {
+    const pin = mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.1, 12), M.solder, false);
+    pin.position.set(-7.62 + i * 2.54, 0.1, -12.6);
+    mod.add(pin);
+  }
+  pickable(pcb, { ref: 'OLED', value: '0.96″ 128 × 64, SSD1306, SPI', desc: 'Display module, glass facing down onto the beam splitter. 7 wires to J4 on the right temple: GND, 3V3, CLK, MOSI, RES, DC, CS.' });
+  pod.add(mod);
+  label(pcb, 'OLED 0.96″ HUD', V(0, 4, -4));
+  // 45 degree beam splitter in front of the lens, and the virtual image the eye sees on it
+  const comb = new THREE.Group();
+  comb.position.set(-47, 15.2, 15.2);
+  comb.rotation.x = Math.PI / 4;
+  const plate = mesh(new THREE.BoxGeometry(26, 32, 1.0), M.combiner, false);
+  plate.renderOrder = 6;
+  comb.add(plate);
+  const img = new THREE.Mesh(new THREE.PlaneGeometry(21.74, 10.86), new THREE.MeshBasicMaterial({ map: hudTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  img.rotation.set(0, Math.PI, 0);
+  img.position.set(0, -1.6, -0.56);
+  img.renderOrder = 7;
+  comb.add(img);
+  pickable(plate, { ref: 'Beam splitter', value: 'Acrylic, 26 × 32 × 1 mm, 45°', desc: 'Partly reflective plate. It reflects the downward-facing OLED back to your right eye while you still see through it.' });
+  pod.add(comb);
+  label(plate, 'Beam splitter', V(16, 0, 0), true);
+  right.pod = pod; right.module = mod; right.comb = comb;
+  explodable(mod, V(0, 14, 0));
+  explodable(comb, V(0, -4, 18));
+  explodable(top, V(0, 26, 0));
+  explodable(walls, V(0, 26, 0));
+}
+
+const glowTex = topTexture((c, w, h) => {
+  const g = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,248,230,0.55)'); g.addColorStop(1, 'rgba(255,240,220,0)');
+  c.fillStyle = g; c.fillRect(0, 0, w, h);
+}, 128, 128);
+const glows = [];
+function glow(parent, pos, size, color = 0xfff3dc) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  s.position.copy(pos);
+  s.scale.setScalar(size);
+  parent.add(s);
+  glows.push(s);
+  return s;
+}
+function buildCornerLeds() {
+  for (const s of [-1, 1]) {
+    const x = s * 69.4, y = 21.2, z = 3.0 - WRAP * x * x;
+    const mat = ledMat(0xfff6e6);
+    const body = mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.6, 24), mat);
+    body.rotation.x = Math.PI / 2;
+    body.position.set(x, y, z + 0.5);
+    const dome = mesh(new THREE.SphereGeometry(1.5, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+    dome.rotation.x = Math.PI / 2;
+    dome.position.set(x, y, z + 1.3);
+    front.add(body, dome);
+    ledMats.corner.push(mat);
+    pickable(body, { ref: s < 0 ? 'Corner LED (right)' : 'Corner LED (left)', value: '3 mm warm white',
+      desc: 'Optional flashlight LED wired to the EXT_LED pads. The touch pad switches it together with the side LEDs.' });
+    const gl = glow(front, V(x, y, z + 2.6), 26);
+    gl.userData.kind = 'corner';
+    if (s < 0) label(body, 'Flashlight LED', V(-2, 4, 2), true);
+  }
+}
+
+let battery = null, btModule = null;
+function buildBattery(t, b) {
+  const g = new THREE.Group();
+  g.position.set(b.x, TOP + b.t / 2 + 0.05, b.y);
+  g.rotation.y = b.rot * Math.PI / 180;
+  const cell = mesh(new RoundedBoxGeometry(b.len, b.t, b.h, 3, 0.8), M.pouch);
+  g.add(cell);
+  const tape = mesh(new THREE.BoxGeometry(b.len * 0.42, 0.04, b.h * 0.86), M.kapton, false);
+  tape.position.set(b.len * 0.18, b.t / 2 + 0.02, 0);
+  g.add(tape);
+  const pcm = mesh(new THREE.BoxGeometry(2.2, b.t * 0.7, b.h * 0.9), M.kapton);
+  pcm.position.x = -b.len / 2 - 1.0;
+  g.add(pcm);
+  t.inner.add(g);
+  pickable(cell, { ref: 'BT1', value: 'LiPo 3.7 V ≈ 60 mAh', desc: 'About 3.5 × 7 × 30 mm pouch cell in the left ear tip, soldered to the battery pads (red to +). Protected by DW01A + FS8205A.' });
+  label(cell, 'LiPo 60 mAh', V(0, 3, 0), true);
+  battery = g;
+  explodable(g, V(0, 10, 0));
+}
+function buildBtModule(t) {
+  const g = new THREE.Group();
+  g.position.set(118, -4.0, 21);
+  g.rotation.set(0, 0, -0.5);
+  const body = mesh(new RoundedBoxGeometry(17, 7, 11, 4, 3), M.bt);
+  g.add(body);
+  const grille = mesh(new THREE.CylinderGeometry(3.2, 3.2, 0.4, 32), M.darkMetal);
+  grille.position.set(3, -3.6, 0);
+  g.add(grille);
+  t.inner.add(g);
+  pickable(body, { ref: 'BT headset', value: 'Your Bluetooth audio module', desc: 'Separate module, powered from the BT_HEADSET pads (J2) through the BT slide switch. Shown as a placeholder near the left ear.' });
+  label(body, 'BT headset module', V(0, -6, 0), true);
+  btModule = g;
+  explodable(g, V(0, -10, 8));
+}
+
+// ------------------------------------------------------------------ wires
+const WIRE_COL = [0xd8352a, 0xf2f2f2, 0x1b1b1b, 0xf2c230, 0xf08a24, 0x3cb44b, 0x3c7dd9, 0x9a5bd6];
+const OLED_COL = [0x1b1b1b, 0xd8352a, 0xf2c230, 0x3cb44b, 0x3c7dd9, 0x9a5bd6, 0x9aa0a8];
+const wireGroup = new THREE.Group();
+glasses.add(wireGroup);
+const wireMats = {};
+const wmat = (c) => wireMats[c] || (wireMats[c] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55 }));
+function tube(points, r, mat, seg = 48) {
+  const c = new THREE.CatmullRomCurve3(points, false, 'centripetal');
+  return mesh(new THREE.TubeGeometry(c, seg, r, 7, false), mat);
+}
+function padWorld(t, list, ref, num, lift = TOP + 0.3) {
+  const p = list.find(q => q.ref === ref);
+  const pad = p.pads.find(q => q[0] === String(num));
+  return t.inner.localToWorld(V(pad[1], lift, pad[2]));
+}
+function tw(t, u, h, v) { return t.inner.localToWorld(V(u, h, v)); }
+function sleevePath(k = 0) {
+  // along the back-top edge of the front, from the right hinge to the left hinge
+  const top = (x) => { const a = Math.abs(x); return a < 30 ? 22.9 + 0.4 * a / 30 : a < 55 ? 23.3 + 0.9 * (a - 30) / 25 : 24.2 + 1.3 * (a - 55) / 17.5; };
+  const pts = [];
+  for (const x of [-60, -45, -30, -15, 0, 15, 30, 45, 60]) pts.push(V(x, top(x) + 1.2 + k, -3.0 - WRAP * x * x - 0.6));
+  return pts;
+}
+let boardsData = null;
+function buildWires() {
+  wireGroup.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  wireGroup.clear();
+  const R = temples['ana-main'], L = temples['ana-power'];
+  if (!R || !L || !boardsData) return;
+  const mainList = boardsData['ana-main'], powList = boardsData['ana-power'];
+  const sl = sleevePath().map(p => front.localToWorld(p));
+  const F = (x, y, z) => front.localToWorld(V(x, y, z));
+  const rExit = tw(R, -1.6, 3.2, 3.0), lExit = tw(L, -1.6, 2.0, 3.0);
+  const rHinge = F(-71.5, 25.2, -15), lHinge = F(71.5, 25.2, -15);
+  // braided sleeve over the brow
+  wireGroup.add(tube([rExit, rHinge, F(-68, 26.5, -10)].concat(sl).concat([F(68, 26.5, -10), lHinge, lExit]), 1.25, M.sleeve, 160));
+  // the eight conductors fan out from the sleeve ends to the pads
+  for (let i = 0; i < 8; i++) {
+    const c = wmat(WIRE_COL[i]);
+    const a = padWorld(R, mainList, 'J1', i + 1), b = padWorld(L, powList, 'J3', i + 1);
+    wireGroup.add(tube([rExit, tw(R, 1.0, 3.2, 4.5 + i * 0.2), a.clone().add(V(0.8, 0, 0)), a], 0.16, c, 24));
+    wireGroup.add(tube([lExit, tw(L, 1.0, 2.6, 2.6), b.clone().add(V(0.8, 0, 0)), b], 0.16, c, 24));
+    wireGroup.add(mesh(new THREE.SphereGeometry(0.45, 12, 8), M.solder, false).translateX(a.x).translateY(a.y).translateZ(a.z));
+    wireGroup.add(mesh(new THREE.SphereGeometry(0.45, 12, 8), M.solder, false).translateX(b.x).translateY(b.y).translateZ(b.z));
+  }
+  // 7-wire OLED cable from J4 to the pod
+  const podIn = right.module ? right.module.localToWorld(V(0, 0.6, -12.6)) : V(-47, 31.8, 0);
+  const jx = tw(R, -1.6, 3.4, 0.6);
+  for (let i = 0; i < 7; i++) {
+    const a = padWorld(R, mainList, 'J4', i + 1);
+    const pin = right.module ? right.module.localToWorld(V(-7.62 + i * 2.54, 0.6, -12.6)) : podIn;
+    wireGroup.add(tube([a, a.clone().add(V(1.0, 0.6, 0)), tw(R, 0.8, 3.4, 0.9 + i * 0.12), jx, F(-71.2, 29.5 + i * 0.12, -12), F(-66, 32.4, -6),
+      pin.clone().add(V(0, 0.8, -1.5)), pin], 0.14, wmat(OLED_COL[i]), 64));
+    wireGroup.add(mesh(new THREE.SphereGeometry(0.42, 12, 8), M.solder, false).translateX(a.x).translateY(a.y).translateZ(a.z));
+  }
+  // corner LEDs to the EXT_LED pads
+  for (const [t, list, ref, s] of [[R, mainList, 'J3', -1], [L, powList, 'J4', 1]]) {
+    for (let k = 1; k <= 2; k++) {
+      const a = padWorld(t, list, ref, k);
+      const led = F(s * 69.4 + (k - 1.5) * 0.9, 21.2, 3.0 - WRAP * 69.4 * 69.4 - 0.6);
+      wireGroup.add(tube([a, tw(t, -0.8, 2.5, 4), F(s * 70.6, 22.5, -12), F(s * 70.2, 21.6, -6), led], 0.13, wmat(k === 1 ? 0xd8352a : 0x1b1b1b), 40));
+    }
+  }
+  // BT headset leads and battery leads
+  for (let k = 1; k <= 2; k++) {
+    const a = padWorld(L, powList, 'J2', k);
+    const m = btModule ? btModule.localToWorld(V(-6 + k, 3.6, 0)) : a;
+    wireGroup.add(tube([a, a.clone().add(V(0.9, 0, 0)), tw(L, 100, 3.0, 9.8), tw(L, 112, 2.0, 15.5), m], 0.14, wmat(k === 1 ? 0xd8352a : 0x1b1b1b), 40));
+    const bp = padWorld(L, powList, 'BT1', k);
+    const bc = battery ? battery.localToWorld(V(-15.6, 0.6 * (k === 1 ? 1 : -1), k === 1 ? -1.6 : 1.6)) : bp;
+    wireGroup.add(tube([bp, bp.clone().add(V(0.8, 0, 0)), bc], 0.18, wmat(k === 1 ? 0xd8352a : 0x1b1b1b), 20));
+  }
+  if (!wireGroup.userData.labelled) {
+    const sl0 = sleevePath(2.5)[4];
+    const anchor = new THREE.Object3D(); anchor.position.copy(sl0); front.add(anchor);
+    label(anchor, 'Frame link · 8 wires', V(0, 2, 0));
+    const pickSleeve = new THREE.Mesh(new THREE.BoxGeometry(120, 3, 3), new THREE.MeshBasicMaterial({ visible: false }));
+    pickSleeve.position.set(0, 25, -5);
+    pickable(pickSleeve, { ref: 'Frame link', value: '8 wires in a sleeve', desc: 'VSYS, LED_K, GND, EN, IO0, CHRG, RX, TX between J1 (right) and J3 (left), same pad order on both boards.' });
+    front.add(pickSleeve);
+    wireGroup.userData.labelled = true;
+  }
+}
+
+// ------------------------------------------------------------------ cover decals (openings seen on a closed cover)
+function decal(t, w, h, mat, pos, rot, always = false) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  m.position.copy(pos);
+  m.rotation.copy(rot);
+  m.userData.always = always;
+  t.coverGroup.add(m);
+  t.decals.push(m);
+  return m;
+}
+function buildDecals() {
+  const R = temples['ana-main'], L = temples['ana-power'];
+  const dark = new THREE.MeshPhysicalMaterial({ color: 0x0a1820, roughness: 0.05, clearcoat: 1, metalness: 0.2 });
+  const slotM = new THREE.MeshBasicMaterial({ color: 0x020304 });
+  // right: MAX30102 window on the inner face (+h), SHT40 slots on top (-v), touch mark on the outer face (-h)
+  decal(R, 6.6, 4.4, dark, V(53, 5.92, 4.3), new THREE.Euler(-Math.PI / 2, 0, 0));
+  for (const u of [41.6, 42.4, 43.2]) decal(R, 0.4, 3.2, slotM, V(u, 2.5, -1.32), new THREE.Euler(Math.PI, 0, 0));
+  const touchTex = topTexture((c, w, h) => { c.clearRect(0, 0, w, h); c.strokeStyle = 'rgba(95,205,255,0.55)'; c.lineWidth = 6; c.beginPath(); c.roundRect(8, 8, w - 16, h - 16, 40); c.stroke();
+    c.fillStyle = 'rgba(95,205,255,0.6)'; c.beginPath(); c.arc(w / 2, h / 2, 14, 0, 7); c.fill(); }, 400, 160);
+  decal(R, 10, 4, new THREE.MeshBasicMaterial({ map: touchTex, transparent: true, depthWrite: false }), V(31.5, -0.92, 4.6), new THREE.Euler(Math.PI / 2, 0, 0));
+  // left: USB-C opening on the bottom (+v), charge LED windows on the outer face (+h)
+  decal(L, 9.6, 3.8, slotM, V(20.5, 2.45, 10.92), new THREE.Euler(0, 0, 0));
+  const red = ledMat(0xff2a1a), grn = ledMat(0x22ff55);
+  ledMats.red = red; ledMats.green = grn;
+  decal(L, 1.4, 1.4, red, V(40.6, 5.93, 7.2), new THREE.Euler(-Math.PI / 2, 0, 0), true);
+  decal(L, 1.4, 1.4, grn, V(42.6, 5.93, 7.2), new THREE.Euler(-Math.PI / 2, 0, 0), true);
+  // both: side-LED window on the front face (-u)
+  for (const t of [R, L]) {
+    const m = ledMat(0xfff4dc);
+    ledMats.front.push(m);
+    decal(t, 1.6, 1.6, m, V(-1.33, 4.6, 4.7), new THREE.Euler(0, -Math.PI / 2, 0), true);
+    const gl = glow(t.inner, V(-2.6, 4.6, 4.7), 9);
+    gl.userData.kind = 'side';
+  }
+}
+
+// ------------------------------------------------------------------ state application
+function applyState() {
+  const on = state.light;
+  for (const m of [...ledMats.side, ...ledMats.corner, ...ledMats.front]) m.emissiveIntensity = on ? 2.4 : 0;
+  for (const g of glows) g.visible = on;
+  if (ledMats.red) { ledMats.red.emissiveIntensity = state.charging ? 3 : 0; ledMats.green.emissiveIntensity = state.charging ? 0 : 0.0; }
+  for (const t of Object.values(temples)) {
+    t.cover.material = state.cover === 'solid' ? M.coverSolid : M.coverClear;
+    t.coverGroup.visible = state.cover !== 'off';
+    for (const d of t.decals) d.visible = state.cover === 'solid' || d.userData.always;
+  }
+  if (right.podWalls) {
+    right.podWalls.visible = state.cover !== 'off';
+    right.podWalls.children.forEach(w => w.material = state.cover === 'solid' ? M.acetate : M.coverClear);
+  }
+  for (const l of labels) l.visible = state.labels;
+  drawHud();
+}
+function setExplode(t) {
+  state.explode = t;
+  for (const o of explodables) o.position.copy(o.userData.base).addScaledVector(o.userData.dir, t);
+  if (temples['ana-main']) {
+    temples['ana-main'].outer.position.set(-26 * t, 0, -6 * t);
+    temples['ana-power'].outer.position.set(26 * t, 0, -6 * t);
+    temples['ana-main'].coverGroup.position.set(0, -14 * t, -10 * t);
+    temples['ana-power'].coverGroup.position.set(0, 16 * t, -10 * t);
+  }
+  front.position.set(0, 0, 10 * t);
+  glasses.updateMatrixWorld(true);
+  buildWires();
+  $('xp').value = t;
+}
+
+// ------------------------------------------------------------------ camera views
+const VIEWS = {
+  hero: { pos: V(250, 135, 250), tgt: V(0, 4, -58), explode: 0 },
+  explode: { pos: V(300, 180, 290), tgt: V(0, 6, -60), explode: 1 },
+  right: { pos: V(135, 26, -88), tgt: V(-68, 6, -88), explode: 0, cover: 'off', hide: 'ana-power', focus: 'ana-main' },
+  left: { pos: V(272, 26, -88), tgt: V(69, 6, -88), explode: 0, cover: 'off', hide: 'ana-main', focus: 'ana-power' },
+  eye: { pos: V(-34, 9, -78), tgt: V(-44, 13, 30), explode: 0 },
+};
+let tween = null, currentView = 'hero';
+function goView(name) {
+  const v = VIEWS[name];
+  currentView = name;
+  for (const k of Object.keys(VIEWS)) $('v-' + (k === 'hero' ? 'hero' : k)).setAttribute('aria-pressed', String(k === name));
+  if (v.cover) setCover(v.cover);
+  for (const [n, t] of Object.entries(temples)) t.outer.visible = n !== v.hide;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  tween = { t0: performance.now(), dur: reduce ? 1 : 1100, p0: camera.position.clone(), q0: controls.target.clone(), p1: v.pos, q1: v.tgt,
+            e0: state.explode, e1: v.explode };
+}
+function setCover(mode) {
+  state.cover = mode;
+  for (const [id, m] of [['c-solid', 'solid'], ['c-clear', 'clear'], ['c-off', 'off']]) $(id).setAttribute('aria-pressed', String(m === mode));
+  applyState();
+}
+$('v-hero').onclick = () => goView('hero');
+$('v-explode').onclick = () => goView('explode');
+$('v-right').onclick = () => goView('right');
+$('v-left').onclick = () => goView('left');
+$('v-eye').onclick = () => { setCover(state.cover === 'off' ? 'clear' : state.cover); goView('eye'); };
+$('c-solid').onclick = () => setCover('solid');
+$('c-clear').onclick = () => setCover('clear');
+$('c-off').onclick = () => setCover('off');
+const toggle = (id, k) => { $(id).onclick = () => { state[k] = !state[k]; $(id).setAttribute('aria-pressed', String(state[k])); applyState(); }; };
+toggle('t-light', 'light'); toggle('t-chg', 'charging'); toggle('t-hud', 'hud'); toggle('t-lbl', 'labels');
+$('xp').oninput = (e) => setExplode(parseFloat(e.target.value));
+
+// ------------------------------------------------------------------ picking
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const tipEl = $('tip');
+let pinned = null;
+function infoHtml(i, big) {
+  const rows = [];
+  if (i.board) rows.push(['Board', i.board]);
+  if (i.value) rows.push(['Value', i.value]);
+  if (i.block) rows.push(['Block', i.block]);
+  if (i.mpn) rows.push(['Part', i.mpn]);
+  if (i.lcsc) rows.push(['LCSC', i.lcsc]);
+  if (i.dnp) rows.push(['Fitted', 'no (tuning spare)']);
+  if (!big) return `<b>${i.ref}</b> ${i.value ? '· ' + i.value : ''}<br>${i.desc || ''}`;
+  return `<div class="ref">${i.ref}</div><dl>${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl><p>${i.desc || ''}</p>`;
+}
+function pick(ev) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const vis = pickables.filter(o => { let p = o; while (p) { if (!p.visible) return false; p = p.parent; } return true; });
+  const hits = ray.intersectObjects(vis, false);
+  // prefer small parts over covers and frames
+  if (state.cover !== 'solid') hits.sort((a, b) => (a.object.userData.info.board ? 0 : 1) - (b.object.userData.info.board ? 0 : 1) || a.distance - b.distance);
+  return hits.length ? hits[0].object.userData.info : null;
+}
+renderer.domElement.addEventListener('pointermove', (ev) => {
+  const i = pick(ev);
+  if (!i) { tipEl.hidden = true; return; }
+  const r = stage.getBoundingClientRect();
+  tipEl.innerHTML = infoHtml(i, false);
+  tipEl.style.left = (ev.clientX - r.left) + 'px';
+  tipEl.style.top = (ev.clientY - r.top) + 'px';
+  tipEl.hidden = false;
+  if (!pinned) $('insp').innerHTML = infoHtml(i, true);
+});
+renderer.domElement.addEventListener('pointerleave', () => { tipEl.hidden = true; });
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', (ev) => { downAt = [ev.clientX, ev.clientY]; });
+renderer.domElement.addEventListener('pointerup', (ev) => {
+  if (!downAt || Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) > 4) return;
+  const i = pick(ev);
+  pinned = i;
+  if (i) $('insp').innerHTML = infoHtml(i, true);
+});
+
+// ------------------------------------------------------------------ resize + loop
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  labelRenderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+function frame(now) {
+  if (tween) {
+    const k = Math.min(1, (now - tween.t0) / tween.dur), e = ease(k);
+    camera.position.lerpVectors(tween.p0, tween.p1, e);
+    controls.target.lerpVectors(tween.q0, tween.q1, e);
+    if (tween.e0 !== tween.e1) setExplode(tween.e0 + (tween.e1 - tween.e0) * e);
+    if (k >= 1) tween = null;
+  }
+  controls.update();
+  const near = camera.position.distanceTo(controls.target) < 300;
+  const focus = currentView && VIEWS[currentView].focus ? temples[VIEWS[currentView].focus].outer : null;
+  for (const l of labels) {
+    let vis = state.labels && (near || !l.userData.detail);
+    let inside = false;
+    for (let p = l.parent; p && vis; p = p.parent) { if (!p.visible) vis = false; if (p === focus) inside = true; }
+    l.visible = vis && (!focus || inside);
+  }
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+// ------------------------------------------------------------------ boot
+async function boot() {
+  try { await document.fonts.load('500 30px "IBM Plex Mono"'); } catch (e) { /* fallback font is fine */ }
+  const data = await (await fetch('assembly-data.json')).json();
+  boardsData = data.boards;
+  const R = makeTemple('ana-main', -72.5, data);
+  const L = makeTemple('ana-power', 67.5, data);
+  buildDisplay();
+  buildCornerLeds();
+  // part tables
+  for (const [id, b] of [['pl-main', 'ana-main'], ['pl-power', 'ana-power']]) {
+    const nat = (s) => s.replace(/\d+/g, (d) => d.padStart(4, '0'));
+    const rows = [...data.boards[b]].sort((a, c) => nat(a.ref).localeCompare(nat(c.ref)));
+    $(id).innerHTML = rows.map(p => `<tr><td class="mono">${p.ref}</td><td>${p.value}${p.dnp ? ' <span class="note">(not fitted)</span>' : ''}</td><td class="note">${p.desc || p.block}</td></tr>`).join('');
+  }
+  const loader = new GLTFLoader();
+  let done = 0;
+  async function fetchModel(name) {
+    // published copy: the model as base64 text; repo copy: the .glb next to the page
+    const r = await fetch(name + '.glb.b64.txt');
+    if (r.ok && !(r.headers.get('content-type') || '').includes('text/html')) {
+      const bin = atob((await r.text()).trim());
+      const u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return u8.buffer;
+    }
+    const r2 = await fetch(name + '.glb');
+    if (!r2.ok) throw new Error('missing ' + name + ' model');
+    return await r2.arrayBuffer();
+  }
+  const loadBoard = async (name, t) => {
+    const buf = await fetchModel(name);
+    const gl = await new Promise((res, rej) => loader.parse(buf, '', res, rej));
+    const s = gl.scene;
+    s.scale.setScalar(1000);
+    s.traverse(o => {
+      if (!o.isMesh) return;
+      o.castShadow = true; o.receiveShadow = true;
+      const m = o.material;
+      if (!m) return;
+      m.envMapIntensity = 1.0;
+      if (m.name === 'mask') { m.color.setRGB(0.012, 0.13, 0.06); m.opacity = 0.94; m.roughness = 0.28; }
+      if (m.name === 'fr4') m.color.setRGB(0.55, 0.5, 0.33);
+    });
+    t.inner.add(s);
+    t.board = s;
+    done++;
+    loadingEl.textContent = `Loaded ${done} of 2 boards…`;
+  };
+  const extras = (name, t) => {
+    for (const p of data.boards[name]) if (!p.model) procedural(t, p, name);
+    hitBoxes(t, data.boards[name], name);
+  };
+  extras('ana-main', R); extras('ana-power', L);
+  buildBattery(L, data.battery);
+  buildBtModule(L);
+  buildDecals();
+  // labels on the boards
+  const at = (t, u, h, v, text) => { const o = new THREE.Object3D(); o.position.set(u, h, v); t.inner.add(o); label(o, text, V(0, 0, 0), true); };
+  at(R, 86.8, 3, 3.9, 'ESP32-U4WDH');
+  at(R, 53, 4, 4.3, 'MAX30102 (skin side)');
+  at(R, 42.4, 2.5, -0.5, 'SHT40');
+  at(R, 31.5, -3, 4.6, 'Touch pad');
+  at(R, 132, 3, 19.8, 'Chip antenna');
+  at(L, 20.5, 6, 9.5, 'USB-C');
+  at(L, 54, 3, -2.5, 'POWER switch');
+  at(L, 79.5, 3, -2.5, 'BT switch');
+  at(L, 12.5, 3, 5.6, 'CP2102N');
+  at(L, 41.6, 3, 7.2, 'Charge LEDs');
+  { const o = new THREE.Object3D(); o.position.set(70, 9, 4); R.inner.add(o); label(o, 'Right temple · ESP32 board'); }
+  { const o = new THREE.Object3D(); o.position.set(45, 9, 4); L.inner.add(o); label(o, 'Left temple · power board'); }
+  await Promise.all([loadBoard('ana-main', R), loadBoard('ana-power', L)]);
+  loadingEl.hidden = true;
+  applyState();
+  glasses.updateMatrixWorld(true);
+  setExplode(0);
+}
+camera.position.copy(VIEWS.hero.pos);
+controls.target.copy(VIEWS.hero.tgt);
+resize();
+requestAnimationFrame(frame);
+boot().catch((e) => { loadingEl.textContent = 'Could not load the model: ' + e.message; console.error(e); });
+</script>
