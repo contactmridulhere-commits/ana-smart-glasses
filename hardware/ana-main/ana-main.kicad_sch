@@ -5107,7 +5107,7 @@
 		)
 		(uuid "c5fbea7d-3716-53df-8694-c06b3e259d49")
 	)
-	(text "ESP32 GPIO map: OLED CLK=4 MOSI=23 CS=15 DC=26 RST=27 | I2C SDA=21 SCL=22 | MAX_INT=5 | TOUCH=14 | BAT_ADC=33 | VBUS=35 | CHRG=13 | 3V3 plane on In2"
+	(text "ESP32 GPIO map: OLED CLK=4 MOSI=23 CS=15 DC=26 RST=27 | I2C SDA=21 SCL=22 | MAX_INT=5 | TOUCH=14 | BAT_ADC=33 | VBUS=35 | CHRG=13 | 3V3 routed, 3V3 pour on In2"
 		(exclude_from_sim no)
 		(at 400 22 0)
 		(effects
@@ -5116,7 +5116,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "8c88bf9d-b859-5c51-9273-1dc9870fde0b")
+		(uuid "9ed9ee85-8401-514b-a884-6205279c1bb1")
 	)
 	(rectangle
 		(start 20 30)

@@ -21,7 +21,19 @@ def layout_main(bb):
     # USB-serial bridge next to the frame-link pads: USB pins (left side) face the hinge pads, UART/DTR/RTS
     # (top side) face the top edge, where they turn towards the ESP32 together with the bring-up pads.
     bb.place('U3', 19.5, 5.0, 0)
-    bb.place('J2', 26.6, 0.85, 0)                      # bring-up pads (top edge, next to the CP2102N)
+    bb.place('J2', 27.9, 0.85, 0)                      # bring-up pads (top edge, next to the CP2102N)
+    # CP2102N support parts kept off its hinge side, so the OLED and frame-link lines can fan in to J4/J1:
+    # 3V3 decoupling at its lower-left corner, VBUS divider and reset pull-up underneath, auto-reset pair right
+    bb.place('C26', 15.9, 5.75, 180)                   # VIO (pin 5)
+    bb.place('C24', 15.9, 6.75, 180)                   # VDD (pin 6)
+    bb.place('C25', 17.85, 8.35, 0)                    # VREGIN (pin 7)
+    bb.place('R12', 19.85, 8.35, 0)                    # VBUS -> VBUS_SENSE (pin 8)
+    bb.place('R13', 21.85, 8.35, 0)                    # VBUS_SENSE -> GND
+    bb.place('R14', 24.0, 8.3, 0)                      # RSTb pull-up (pin 9)
+    # DTR/RTS auto-reset pair, turned so both base pins (2 and 5) face their resistors directly
+    bb.place('Q1', 23.9, 4.2, 90)
+    bb.place('R16', 23.9, 1.93, 0)                     # RTS -> base 2 (pin 5, top middle)
+    bb.place('R15', 23.9, 6.47, 0)                     # DTR -> base 1 (pin 2, bottom middle)
     bb.place('E1', 31.5, 4.6, 0, back=True)            # touch electrode on the outer face
     bb.place('U7', 28.0, 4.6, 0)                       # TTP223
     bb.place('Q2', 34.5, 4.6, 0)                       # LED switch
@@ -57,8 +69,6 @@ def layout_main(bb):
     # ---- keep-clear rings: leave escape space around fine-pitch chips while placing passives ---------
     rings = [Polygon([(86.825 - 2.85 - 2.2, -1), (86.825 + 2.85 + 2.15, -1), (86.825 + 2.85 + 2.15, 10),
                       (86.825 - 2.85 - 2.2, 10)]),
-             Polygon([(19.5 - 2.35 - 0.6, 5.0 - 2.35 - 0.6), (19.5 + 2.35 + 0.6, 5.0 - 2.35 - 0.6),
-                      (19.5 + 2.35 + 0.6, 5.0 + 2.35 + 0.6), (19.5 - 2.35 - 0.6, 5.0 + 2.35 + 0.6)]),
              Polygon([(89.3, 3.85), (93.1, 3.85), (93.1, 6.7), (89.3, 6.7)])]   # ESP32 tip-side escape stubs
     bb.keepouts += rings
 
@@ -95,17 +105,12 @@ def layout_main(bb):
     bb.place('C20', 58.4, 6.4, 90)
     bb.place('C21', 66.1, 6.4, 90)
     bb.place('C22', 67.5, 6.4, 90)
-    for ref, a in [('R12', ('U3', '8')), ('R13', ('U3', '8')),
-                   ('C24', ('U3', '6')), ('C25', ('U3', '7')), ('C26', ('U3', '5')), ('R14', ('U3', '9')),
-                   ('Q1', ('U3', '23')),
-                   ('C28', ('U4', '9')), ('C27', ('U4', '10')), ('C30', ('U4', '11')), ('C29', ('U4', '11')),
+    for ref, a in [('C28', ('U4', '9')), ('C27', ('U4', '10')), ('C30', ('U4', '11')), ('C29', ('U4', '11')),
                    ('U5', ('U4', '11')), ('R19', ('U4', '13')), ('R17', ('U4', '3')), ('R18', ('U4', '2')),
                    ('C33', ('U7', '5')), ('C34', ('U7', '3')), ('R20', ('Q2', '1')),
                    ('R21', ('D1', '2')), ('R22', ('J3', '1'))]:
         near(ref, a, spacing=0.3, max_r=16.0)
     near('C31', ('U5', '3'), spacing=0.3)
-    near('R15', ('Q1', '2'), spacing=0.3)
-    near('R16', ('Q1', '5'), spacing=0.3)
     near('C32', ('U6', '3'), spacing=0.3)
     for r in rings + [xtal, lane, rf_band]:
         bb.keepouts.remove(r)

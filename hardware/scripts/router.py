@@ -52,6 +52,9 @@ class Router:
         self.reservations = {}       # net -> list of reserved escape geometries
         self.fixed = {}              # net -> escape stubs / plane vias that rip-up must keep
         self.items = []              # routed copper, turned into KiCad objects by flush()
+        self.fixed_mask = np.zeros((3, self.H, self.W), dtype=bool)      # escape stubs / plane vias (not movable)
+        self.hard_nets = {'GND', '3V3', 'LNA_IN', 'RF_MID', 'RF_FEED'}  # never ripped up by the blocker search
+        self.novia_net = {}          # net -> mask where that net may not drop a via (e.g. 3V3 outside its plane)
         self.dir_cost = {}           # layer -> (horizontal, vertical, diagonal) step costs (default 1, 1, 1.414)
         self.via_block = np.zeros((self.H, self.W), dtype=np.int16)        # same-net via spacing
         self.track_count = 0
@@ -200,6 +203,14 @@ class Router:
         if novia:
             self.novia |= mask
 
+    def no_vias_for(self, net, poly):
+        """forbid vias of one net inside poly."""
+        r = self._raster_mask(poly)
+        if r:
+            i0, i1, j0, j1, m = r
+            mask = self.novia_net.setdefault(net, np.zeros((self.H, self.W), dtype=bool))
+            mask[i0:i1, j0:j1] |= m
+
     def no_vias(self, poly):
         """forbid vias inside poly (tracks still allowed)."""
         r = self._raster_mask(poly)
@@ -237,6 +248,19 @@ class Router:
                 self.routed[L, i0:i1, j0:j1][m] = self.code(net)
         self._via_block(x, y, 1)
         self.vias.append((x, y, net))
+
+    def _mark_fixed(self, pts, w, via=True):
+        g = LineString(pts).buffer(w / 2) if len(pts) > 1 else Point(pts[0]).buffer(w / 2)
+        r = self._raster_mask(g)
+        if r:
+            i0, i1, j0, j1, m = r
+            self.fixed_mask[0, i0:i1, j0:j1] |= m
+        if via:
+            r = self._raster_mask(Point(*pts[-1]).buffer(VIA_D / 2))
+            if r:
+                i0, i1, j0, j1, m = r
+                for L in range(3):
+                    self.fixed_mask[L, i0:i1, j0:j1] |= m
 
     def flush(self):
         """Create the KiCad tracks and vias for everything routed."""
@@ -338,10 +362,11 @@ class Router:
 
     def snapshot(self):
         return (list(self.items), self.owner.copy(), self.routed.copy(), self.via_block.copy(), list(self.vias),
-                self.track_count, {k: list(v) for k, v in self.fixed.items()})
+                self.track_count, {k: list(v) for k, v in self.fixed.items()}, self.fixed_mask.copy())
 
     def restore(self, snap):
-        items, owner, routed, vb, vias, tc, fixed = snap
+        items, owner, routed, vb, vias, tc, fixed, fm = snap
+        self.fixed_mask[...] = fm
         self.items = list(items)
         self.owner[...] = owner
         self.routed[...] = routed
@@ -363,6 +388,8 @@ class Router:
         need_v = clr + VIA_D / 2 + EPS
         via_ok = (~self.novia[i0:i1, j0:j1]) & (self.via_block[i0:i1, j0:j1] == 0) & \
             (self.edge_dist[i0:i1, j0:j1] >= EDGE_CLR + VIA_D / 2 + 0.05)
+        if net in self.novia_net:
+            via_ok &= ~self.novia_net[net][i0:i1, j0:j1]
         extra = [np.zeros((i1 - i0, j1 - j0), dtype=bool) for _ in range(3)]
         for mask, allowed, lys in self.blocked_for.get('*', []):
             if net not in allowed:
@@ -637,6 +664,140 @@ class Router:
                 failed.append(p)
         return failed
 
+    def blockers(self, net, pin, pins, w, clr=0.1, layers=(0, 1, 2), allow_via=True, penalty=60.0,
+                 via_cost=24.0):
+        """Which other nets stand between `pin` and the rest of `net`?  Searches a path that may cross other nets'
+        movable copper (tracks/vias that are not escape stubs, plane vias or RF) at a penalty per cell, and
+        returns the set of nets that path would have to displace (empty set: no path even then)."""
+        pc = {p: self.pad_cells(*p) for p in pins}
+        pc = {p: c for p, c in pc.items() if c}
+        if pin not in pc or len(pc) < 2:
+            return set()
+        comp_of, ccells = self.islands(net, pc)
+        tgt = comp_of.get(pin)
+        others = {}
+        for p, k in comp_of.items():
+            if k != tgt:
+                others[k] = others.get(k, 0) + 1
+        if not others:
+            return set()
+        main = max(others, key=others.get)
+        src, dst = ccells[main], ccells.get(tgt, pc[pin])
+        code = self.code(net)
+        inv = {v: k for k, v in self.netcode.items()}
+        hard_codes = {self.netcode[n] for n in self.hard_nets if n in self.netcode}
+        i0, i1, j0, j1 = 0, self.H, 0, self.W
+        need = clr + w / 2 + EPS
+        need_v = clr + VIA_D / 2 + EPS
+        extra = [np.zeros((self.H, self.W), dtype=bool) for _ in range(3)]
+        for mask, allowed, lys in self.blocked_for.get('*', []):
+            if net not in allowed:
+                for L in lys:
+                    extra[L] |= mask
+        ok_h, soft, d_all = [], [], []
+        via_h = (~self.novia) & (self.via_block == 0) & (self.edge_dist >= EDGE_CLR + VIA_D / 2 + 0.05)
+        if net in self.novia_net:
+            via_h &= ~self.novia_net[net]
+        via_s = np.zeros_like(via_h)
+        for L in range(3):
+            own = self.owner[L]
+            other = (own != 0) & (own != code)
+            rt = self.routed[L]
+            movable = (rt != 0) & (rt != code) & ~self.fixed_mask[L] & ~np.isin(rt, list(hard_codes))
+            hard = other & ~movable
+            dh = ndimage.distance_transform_edt(~hard) * RES if hard.any() else np.full(own.shape, 99.0)
+            da = ndimage.distance_transform_edt(~other) * RES if other.any() else np.full(own.shape, 99.0)
+            m = (dh >= need) & (self.edge_dist >= EDGE_CLR + w / 2 + EPS) & ~extra[L]
+            if L not in layers:
+                m[:] = False
+            ok_h.append(m)
+            soft.append(m & (da < need))
+            via_h &= dh >= need_v
+            via_s |= da < need_v
+            d_all.append(movable)
+        if len(layers) == 3:
+            via_h &= ~(extra[0] & extra[1] & extra[2])
+        h, wd = i1 - i0, j1 - j0
+        okb = [bytearray(np.ascontiguousarray(o, dtype=np.uint8).tobytes()) for o in ok_h]
+        sfb = [bytearray(np.ascontiguousarray(o, dtype=np.uint8).tobytes()) for o in soft]
+        vob = bytearray(np.ascontiguousarray(via_h, dtype=np.uint8).tobytes())
+        vsb = bytearray(np.ascontiguousarray(via_s & via_h, dtype=np.uint8).tobytes())
+        dset = {(L, i * wd + j) for (L, i, j) in dst}
+        dp = np.array([[c[1], c[2]] for c in dst])
+        tci, tcj = dp[:, 0].mean(), dp[:, 1].mean()
+        rad = math.hypot(np.ptp(dp[:, 0]), np.ptp(dp[:, 1])) / 2
+
+        def hfun(k):
+            di = abs(k // wd - tci); dj = abs(k % wd - tcj)
+            return max(0.0, (max(di, dj) + 0.41421 * min(di, dj)) - rad)
+        INF = float('inf')
+        g, prev, heap = {}, {}, []
+        for (L, i, j) in src:
+            if L in layers:
+                st = (L, i * wd + j)
+                g[st] = 0.0
+                prev[st] = None
+                heapq.heappush(heap, (hfun(st[1]), 0.0, L, st[1]))
+        found, exp = None, 0
+        while heap:
+            f, gc, L, k = heapq.heappop(heap)
+            if gc > g.get((L, k), INF):
+                continue
+            if (L, k) in dset:
+                found = (L, k)
+                break
+            exp += 1
+            if exp > 4_000_000:
+                break
+            ci, cj = divmod(k, wd)
+            row, srow = okb[L], sfb[L]
+            dc = self.dir_cost.get(L)
+            for di, dj, cst in DIRS:
+                if dc is not None:
+                    cst = dc[0] if di == 0 else dc[1] if dj == 0 else dc[2]
+                ni, nj = ci + di, cj + dj
+                if ni < 0 or nj < 0 or ni >= h or nj >= wd:
+                    continue
+                nk = ni * wd + nj
+                if not row[nk] and (L, nk) not in dset:
+                    continue
+                ng = gc + cst + (penalty if srow[nk] else 0.0)
+                if ng < g.get((L, nk), INF):
+                    g[(L, nk)] = ng
+                    prev[(L, nk)] = (L, k)
+                    heapq.heappush(heap, (ng + hfun(nk), ng, L, nk))
+            if allow_via and vob[k]:
+                for L2 in layers:
+                    if L2 == L or not okb[L2][k]:
+                        continue
+                    ng = gc + via_cost + (penalty if vsb[k] else 0.0)
+                    if ng < g.get((L2, k), INF):
+                        g[(L2, k)] = ng
+                        prev[(L2, k)] = (L, k)
+                        heapq.heappush(heap, (ng + hfun(k), ng, L2, k))
+        if not found:
+            return set()
+        nets, st = set(), found
+        r = int(math.ceil(need / RES)) + 1
+        rv = int(math.ceil(need_v / RES)) + 1
+        while st is not None:
+            L, k = st
+            pst = prev[st]
+            ci, cj = divmod(k, wd)
+            via_step = pst is not None and pst[1] == k and pst[0] != L
+            LL, rr = ((0, 1, 2), rv) if via_step else ((L,), r)
+            for Lq in LL:
+                if not via_step and not soft[Lq][ci, cj]:
+                    continue
+                a0, a1, b0, b1 = max(ci - rr, 0), min(ci + rr + 1, h), max(cj - rr, 0), min(cj + rr + 1, wd)
+                blk = self.routed[Lq, a0:a1, b0:b1][d_all[Lq][a0:a1, b0:b1]]
+                for c in np.unique(blk):
+                    if int(c) in inv:
+                        nets.add(inv[int(c)])
+            st = pst
+        nets.discard(net)
+        return nets
+
     def dump_fail(self, path, title=''):
         """Debug picture of the last failed search: explored cells per layer (F red, In2 green, B blue)."""
         from PIL import Image, ImageDraw
@@ -685,6 +846,7 @@ class Router:
         self.add_track(net, pts, 0, w)
         self.add_via(net, *pts[-1])
         self.fixed.setdefault(net, []).append((pts, w))
+        self._mark_fixed(pts, w)
         return True
 
     def pad_connected(self, net, ref, num):
@@ -810,6 +972,7 @@ class Router:
             self.add_via(net, x, y)
             if fixed:
                 self.fixed.setdefault(net, []).append(([(bx, by), (x, y)], w))
+                self._mark_fixed([(bx, by), (x, y)], w)
             return True
         return False
 

@@ -46,13 +46,17 @@ Both boards are 4-layer, 0.8 mm FR-4 with all parts on the top layer.
 
 | Layer | `ana-main` (right) | `ana-power` (left) |
 |---|---|---|
-| F.Cu (top) | parts, short links, RF feed, GND pour | parts, signals, GND pour |
+| F.Cu (top) | parts, short links and cross-board hops, RF feed, GND pour | parts, signals, GND pour |
 | In1.Cu | solid GND plane (RF reference) | solid GND plane |
-| In2.Cu | solid 3.3 V plane; every 3.3 V pad has its own via | signals + GND pour |
-| B.Cu (bottom) | long signals along the temple, touch electrode, GND pour | signals + GND pour |
+| In2.Cu | long signals running along the temple, 3.3 V pour in the free space | signals + GND pour |
+| B.Cu (bottom) | long signals running along the temple, touch electrode, GND pour | signals + GND pour |
 
 The ESP32 pins escape through a fixed pattern of short stubs and vias in up to three staggered rows, so
-none of its 0.35 mm-pitch pins is boxed in.
+none of its 0.35 mm-pitch pins is boxed in. Its footprint has no bottom-side copper pad (the 16 thermal vias
+still tie the exposed pad to the In1 ground plane), so tracks can also pass under the chip. On the right
+temple the long lines run lengthwise on In2 and B.Cu and cross the board on F.Cu, so no track walls off
+another; 3.3 V is routed as a net (0.3 mm where it fits) and backed by the 3.3 V pour on In2. Nothing runs
+under the touch electrode except its own pad.
 
 ## Wiring between the boards
 
@@ -71,7 +75,8 @@ GND, VCC (3.3 V), D0/CLK, D1/MOSI, RES, DC, CS.
 
 Other pads: `EXT_LED` (+/−, optional brighter LED at the frame corner, 68 Ω already on board),
 `BT_HEADSET` (+/− switched battery for your Bluetooth headset module), battery `+`/`−`, and on the right
-temple a row of bring-up pads `3V3 GND TX RX EN IO0 IO4`.
+temple six bring-up pads `3V3 GND TX RX EN IO0` on the top edge next to the CP2102N (x ≈ 24–29 mm; TX is
+the ESP32's TX after its 470 Ω series resistor).
 
 ## What changed from the V1 wiring, and why
 
@@ -79,8 +84,8 @@ temple a row of bring-up pads `3V3 GND TX RX EN IO0 IO4`.
 |---|---|
 | ESP32-U4WDH bare chip instead of the WROOM module | The WROOM is 18 mm wide, taller than the temple. U4WDH is the same dual-core 240 MHz ESP32 with Bluetooth Classic (needed by `SerialBT`) and 4 MB flash inside. Its crystal, RF match and antenna are on the board, following Espressif's reference design. |
 | New pin map: OLED CLK/MOSI/CS/DC/RST = 4/23/15/26/27, I²C unchanged (21/22) | U4WDH uses GPIO16/17 for its in-package flash, and on a 7.7 mm-tall board each chip edge can only escape a few signals, so pins were picked by which edge of the chip faces where they go. The firmware has `#define ANA_TEMPLE_PCB 1` with the new pins. |
-| SHT40 instead of DHT11 | DHT11 is 12 × 15.5 × 5.5 mm and does not fit a 5 mm temple; SHT40 is 1.5 mm, ±0.2 °C, on the same I²C bus. It sits on a slotted island so board heat does not reach it. |
-| USB-C flashing (CP2102N + DTR/RTS auto-reset) | Plug in and upload like a devkit; no external programmer. |
+| SHT40 instead of DHT11 | DHT11 is 12 × 15.5 × 5.5 mm and does not fit a 5 mm temple; SHT40 is 1.5 mm, ±0.2 °C, on the same I²C bus. It sits at the top edge, about 20 mm from the regulator and 45 mm from the ESP32, with no copper pour around it. |
+| USB-C flashing (CP2102N + DTR/RTS auto-reset) | Plug in and upload like a devkit; no external programmer. The CP2102N sits at the hinge end, next to the pads where the USB wires arrive. |
 | TP4056 + DW01A/FS8205A + power path | Like a protected TP4056 module, but the glasses run from USB while charging so the charger terminates correctly. |
 | POWER and BT slide switches (switching MOSFET gates) | The tiny switches only carry gate current; the FETs carry the load. The BT headset is fed from the protected cell directly, never from 5 V. |
 | Battery %, USB and charging status to the ESP32 | Shown in the top corner of the HUD. The charge-status line has a diode so nothing back-powers the ESP32 when it is off. |

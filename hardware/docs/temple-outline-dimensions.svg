@@ -13,7 +13,7 @@
 <text x="767.1" y="112.3" fill="#c62828" text-anchor="middle">tip 39.5 mm @ 30 deg (cover B = 40)</text>
 <text x="861.5" y="220.1" fill="#c62828">6.4</text>
 <text x="30" y="226.6">Board thickness 0.8 mm; tallest part 1.55 mm (MAX30102) on the main board, 3.3 mm (USB-C) on the power board.</text>
-<text x="30" y="242.6">Main (right) board: parts face the head; MAX30102 window at x = 50-56 mm; touch electrode on outer face x = 25.5-37.5 mm;</text>
+<text x="30" y="242.6">Main (right) board: parts face the head; MAX30102 window at x = 50-56 mm; touch electrode (10 x 4 mm) on the outer face at x = 26.5-36.5 mm;</text>
 <text x="30" y="258.6">   SHT40 vent at x = 41-44 mm top edge; antenna zone = last 9.5 mm of the tip (keep metal/wires away).</text>
 <text x="30" y="274.6">Power (left) board: USB-C opening on the bottom edge at x = 16-25 mm; slide switches on the top edge at x = 54 mm (POWER)</text>
 <text x="30" y="290.6">   and x = 79.5 mm (BT); charge LEDs at x = 40-43 mm; LiPo (~3.5 x 7 x 30 mm) sits in the ear tip, pads at x = 97-101 mm.</text>

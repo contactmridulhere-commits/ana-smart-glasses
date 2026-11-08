@@ -4,7 +4,7 @@ import math
 import os
 
 import pcbnew
-from shapely.geometry import Polygon, box
+from shapely.geometry import Polygon, Point, box
 from shapely import affinity
 
 import schgen
@@ -129,6 +129,53 @@ class Builder:
         fp.Value().SetVisible(False)
         self.fps[ref] = fp
         return fp
+
+    def clear_silk_pads(self):
+        """Library pin-1 triangles that land on a pad's solder-mask opening (their own or a neighbour's) would be
+        clipped by the fab and are flagged by DRC: replace each with a small silk dot next to pad 1 that is clear
+        of every pad."""
+        pads = []
+        for f in self.fps.values():
+            for p in f.Pads():
+                if p.IsOnLayer(pcbnew.F_Cu):
+                    bb = p.GetBoundingBox()
+                    x0, y0 = local(bb.GetOrigin())
+                    x1, y1 = local(bb.GetEnd())
+                    pads.append(box(x0, y0, x1, y1).buffer(0.15))
+        from shapely.ops import unary_union
+        padu = unary_union(pads)
+        for ref, fp in self.fps.items():
+            if fp.IsFlipped():
+                continue
+            for g in list(fp.GraphicalItems()):
+                if g.GetLayer() != pcbnew.F_SilkS or g.GetClass() != 'PCB_SHAPE' or \
+                        g.GetShape() != pcbnew.SHAPE_T_POLY:
+                    continue
+                bb = g.GetBoundingBox()
+                x0, y0 = local(bb.GetOrigin())
+                x1, y1 = local(bb.GetEnd())
+                if not box(x0, y0, x1, y1).intersects(padu):
+                    continue
+                fp.Remove(g)
+                p1 = [p for p in fp.Pads() if p.GetNumber() == '1']
+                if not p1:
+                    continue
+                px, py = local(p1[0].GetPosition())
+                pb = p1[0].GetBoundingBox()
+                hw, hh = pcbnew.ToMM(pb.GetWidth()) / 2, pcbnew.ToMM(pb.GetHeight()) / 2
+                for dx, dy in ((-(hw + 0.3), 0), (0, hh + 0.3), (0, -(hh + 0.3)), (hw + 0.3, 0),
+                               (-(hw + 0.3), hh), (-(hw + 0.3), -hh)):
+                    c = Point(px + dx, py + dy)
+                    if not c.buffer(0.12).intersects(padu) and self.t.poly.buffer(-0.2).contains(c):
+                        dot = pcbnew.PCB_SHAPE(fp)
+                        dot.SetShape(pcbnew.SHAPE_T_CIRCLE)
+                        dot.SetCenter(P(c.x, c.y))
+                        dot.SetEnd(P(c.x + 0.1, c.y))
+                        dot.SetFilled(True)
+                        dot.SetWidth(mm(0.05))
+                        dot.SetLayer(pcbnew.F_SilkS)
+                        fp.Add(dot)
+                        break
 
     def courtyard(self, fp):
         layer = pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd

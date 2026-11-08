@@ -95,7 +95,7 @@ def drawings(name):
         'F.Cu,F.Silkscreen,F.Fab,Edge.Cuts', '-o', os.path.join(DOCS, name + '-assembly-top.pdf'), pcb)
     for side in ('top', 'bottom'):
         run('kicad-cli', 'pcb', 'render', '--side', side, '--quality', 'high', '-w', '2400', '-h', '700',
-            '--zoom', '1.0', '-o', os.path.join(DOCS, '%s-render-%s.png' % (name, side)), pcb)
+            '--zoom', '3.0', '-o', os.path.join(DOCS, '%s-render-%s.png' % (name, side)), pcb)
 
 
 def outline_svg():
