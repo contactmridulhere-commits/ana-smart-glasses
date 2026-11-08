@@ -1,0 +1,97 @@
+(footprint "TouchElectrode_5x12mm_Back"
+	(version 20241229)
+	(generator "ana_gen")
+	(generator_version "1.0")
+	(layer "F.Cu")
+	(descr "Capacitive touch electrode 12x5 mm, copper only, covered by solder mask. Place on the back (outer) side.")
+	(tags "")
+	(property "Reference" "REF**"
+		(at 0 -1.5 0)
+		(layer "F.SilkS")
+		(uuid "f4e8e99d-d71e-5b1b-b033-888cb6f51d19")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "TouchElectrode_5x12mm_Back"
+		(at 0 1.5 0)
+		(layer "F.Fab")
+		(uuid "623418f0-7ba0-5521-ad63-514ccf9acf71")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5a054e3f-8663-5b01-b321-09f552c290aa")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9a142799-f074-5c90-a48f-44398b41c656")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Description" "Capacitive touch electrode 12x5 mm, copper only, covered by solder mask. Place on the back (outer) side."
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "493fc067-b6a4-56cc-907f-7b00e5bfcaf1")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(attr smd exclude_from_pos_files exclude_from_bom)
+	(pad "1" smd roundrect
+		(at 0 0)
+		(size 12 5)
+		(layers "F.Cu")
+		(roundrect_rratio 0.2)
+		(uuid "6c9f9d81-63f5-5086-9923-162376db2db6")
+	)
+	(fp_rect
+		(start -6.25 -2.75)
+		(end 6.25 2.75)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "8e04bc0b-2dcd-55dc-a277-55a2304274d2")
+	)
+	(fp_text user "TOUCH"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "117fed7c-8353-5afa-a128-ddc01b8884e4")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(embedded_fonts no)
+)

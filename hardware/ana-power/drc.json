@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-11-07T21:15:03+0000",
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "9.0.9",
+    "schematic_parity": [],
+    "source": "ana-power.kicad_pcb",
+    "unconnected_items": [],
+    "violations": [
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Circle of J4 on F.Silkscreen",
+                    "pos": {
+                        "x": 34.2,
+                        "y": 67.1
+                    },
+                    "uuid": "91471a7a-76aa-4694-b243-1652232af882"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Polygon of U2 on F.Silkscreen",
+                    "pos": {
+                        "x": 63.03,
+                        "y": 67.06
+                    },
+                    "uuid": "c88bca7a-bdf7-4dc5-9dc5-74e5ef241a29"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Copper connection too narrow (board setup constraints minimum connection width 0.1000 mm; actual 0.0499 mm) (F.Cu)",
+            "items": [
+                {
+                    "description": "Track [/GND] on F.Cu, length 0.1000 mm",
+                    "pos": {
+                        "x": 68.7,
+                        "y": 60.9
+                    },
+                    "uuid": "b1075be2-14f2-4ad4-aa11-a650b4c0bafc"
+                },
+                {
+                    "description": "Via [/GND] on F.Cu - B.Cu",
+                    "pos": {
+                        "x": 68.7,
+                        "y": 61.0
+                    },
+                    "uuid": "3e3912fc-69e3-49ba-9cfd-f0d3847b7f8a"
+                }
+            ],
+            "severity": "warning",
+            "type": "connection_width"
+        }
+    ]
+}

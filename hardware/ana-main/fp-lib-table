@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "ana")(type "KiCad")(uri "${KIPRJMOD}/../lib/ana.pretty")(options "")(descr "ANA project footprints"))
+)

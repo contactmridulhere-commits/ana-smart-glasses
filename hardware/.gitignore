@@ -1,0 +1,11 @@
+# KiCad local/cache files
+*-backups/
+*.kicad_prl
+fp-info-cache
+*.lck
+\#auto_saved_files#
+_autosave-*
+*.net.xml
+# loose fabrication files (the zipped set in fab/<board>/ is what you upload)
+fab/*/gerbers/
+__pycache__/

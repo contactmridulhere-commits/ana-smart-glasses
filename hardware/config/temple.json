@@ -1,0 +1,18 @@
+{
+  "_comment": "Inside dimensions of the temple cover (mm). Re-run hardware/scripts/build.py after changing. See hardware/README.md for the drawing.",
+  "A_straight_length": 105.0,
+  "B_tip_length": 40.0,
+  "theta_bend_deg": 30.0,
+  "H1_height_at_hinge": 10.0,
+  "H2_height_at_bend": 8.0,
+  "H3_height_at_tip": 7.0,
+  "T_inside_thickness": 5.0,
+  "pcb_clearance_top_bottom": 0.3,
+  "pcb_clearance_front": 0.5,
+  "pcb_clearance_tip": 0.5,
+  "pcb_thickness": 0.8,
+  "corner_radius_front": 1.0,
+  "corner_radius_tip": 2.5,
+  "bend_outer_radius": 12.0,
+  "bend_inner_radius": 6.0
+}
