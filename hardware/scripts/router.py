@@ -51,11 +51,14 @@ class Router:
         self.vias = []               # (x, y, net)
         self.reservations = {}       # net -> list of reserved escape geometries
         self.fixed = {}              # net -> escape stubs / plane vias that rip-up must keep
+        self.fixed_tracks = {}       # net -> fixed F.Cu tracks without a via (escape fingers)
+        self.fixed_paths = {}        # net -> [(pts, layer, w, vias)]: pre-planned trunks on any layer
         self.items = []              # routed copper, turned into KiCad objects by flush()
         self.fixed_mask = np.zeros((3, self.H, self.W), dtype=bool)      # escape stubs / plane vias (not movable)
         self.hard_nets = {'GND', '3V3', 'LNA_IN', 'RF_MID', 'RF_FEED'}  # never ripped up by the blocker search
         self.novia_net = {}          # net -> mask where that net may not drop a via (e.g. 3V3 outside its plane)
         self.dir_cost = {}           # layer -> (horizontal, vertical, diagonal) step costs (default 1, 1, 1.414)
+        self.dir_zones = []          # (layer, i0, i1, j0, j1, (h, v, d)): local overrides of dir_cost
         self.via_block = np.zeros((self.H, self.W), dtype=np.int16)        # same-net via spacing
         self.track_count = 0
         self.free_code = 100000
@@ -203,6 +206,11 @@ class Router:
         if novia:
             self.novia |= mask
 
+    def dir_zone(self, layer, x0, y0, x1, y1, costs):
+        i0, j0 = self.cell(x0, y0)
+        i1, j1 = self.cell(x1, y1)
+        self.dir_zones.append((layer, i0, i1, j0, j1, costs))
+
     def no_vias_for(self, net, poly):
         """forbid vias of one net inside poly."""
         r = self._raster_mask(poly)
@@ -312,7 +320,7 @@ class Router:
                         g = self._pad_poly(pad, L)
                         if g is not None and not g.is_empty:
                             pads.setdefault((net, li), []).append(g)
-        nv = ns = 0
+        nv = ns = nt = 0
         while True:
             segs, vias = {}, {}
             for k, it in enumerate(items):
@@ -322,33 +330,82 @@ class Router:
                     segs.setdefault((it[1], it[3]), []).append((k, LineString(it[2]), it[4]))
                 else:
                     vias.setdefault(it[1], []).append((k, Point(it[2], it[3])))
-            drop = set()
+            drop, cut, add = set(), {}, []
             for k, it in enumerate(items):
                 if it[1] in keep_nets:
                     continue
                 net = it[1]
                 if it[0] == 'V':
                     pt = Point(it[2], it[3])
-                    nl = 0
+                    touch = []
                     for li in range(3):
-                        hit = any(g.distance(pt) <= tol for g in pads.get((net, li), []))
-                        hit = hit or any(ls.distance(pt) <= w / 2 + VIA_D / 2 + tol
-                                         for _, ls, w in segs.get((net, li), []))
-                        nl += hit
-                    if nl < 2:
+                        hp = [g for g in pads.get((net, li), []) if g.distance(pt) <= tol]
+                        hs = [(ls, w) for k2, ls, w in segs.get((net, li), []) if k2 not in drop and
+                              ls.distance(pt) <= w / 2 + VIA_D / 2 + tol]
+                        if hp or hs:
+                            touch.append((li, hp, hs))
+                    if len(touch) < 2:
                         drop.add(k)
+                        # a via that only joins copper on one layer is surplus, but it may still be the joint
+                        # between those tracks: replace it by short links to its centre on that layer
+                        if touch and len(touch[0][1]) + len(touch[0][2]) >= 2:
+                            li = touch[0][0]
+                            for ls, w2 in touch[0][2]:
+                                if ls.distance(pt) > tol:
+                                    q = ls.interpolate(ls.project(pt))
+                                    add.append(('T', net, [(round(q.x, 4), round(q.y, 4)), (it[2], it[3])], li, w2))
                     continue
                 _, _, (a, b), li, w = it
+                dangling = []
                 for end in (a, b):
                     pt = Point(end)
                     ok = any(g.distance(pt) <= tol for g in pads.get((net, li), []))
                     ok = ok or any(vp.distance(pt) <= VIA_D / 2 + tol for _, vp in vias.get(net, []))
                     ok = ok or any(k2 != k and ls.distance(pt) <= w2 / 2 + tol
                                    for k2, ls, w2 in segs.get((net, li), []))
-                    if not ok:
-                        drop.add(k)
-                        break
-            if not drop:
+                    dangling.append(not ok)
+                if not any(dangling):
+                    continue
+                # Something may join this segment part-way along (a T-junction: another track ends on it, or a via
+                # sits on it).  Then only the free tail past the last junction is surplus: cut it off instead of
+                # deleting the whole segment, which would cut the junction off as well.
+                line = LineString([a, b])
+                ln = line.length
+                ts = []
+                for k2, ls2, _w2 in segs.get((net, li), []):
+                    if k2 != k:
+                        for e in (ls2.coords[0], ls2.coords[-1]):
+                            if line.distance(Point(e)) <= w / 2 + tol:
+                                ts.append(line.project(Point(e)))
+                for _, vp in vias.get(net, []):
+                    if line.distance(vp) <= w / 2 + VIA_D / 2 + tol:
+                        ts.append(line.project(vp))
+                for g in pads.get((net, li), []):
+                    if g.distance(line) <= tol:
+                        hit = g.intersection(line)
+                        tc = line.project(g.centroid)
+                        if not hit.is_empty:
+                            span = [line.project(Point(c)) for c in
+                                    (hit.coords if hasattr(hit, 'coords') else
+                                     [c for gg in hit.geoms for c in gg.coords])]
+                            tc = min(max(tc, min(span)), max(span))
+                        ts.append(tc)
+                lo, hi = (0.0 if not dangling[0] else (min(ts) if ts else ln),
+                          ln if not dangling[1] else (max(ts) if ts else 0.0))
+                if dangling[0] and dangling[1] and len(ts) < 2:
+                    lo, hi = 0.0, 0.0
+                if dangling[0] and lo <= tol:
+                    lo = 0.0                                # junction at the very end: the end is attached after all
+                if dangling[1] and hi >= ln - tol:
+                    hi = ln
+                if (lo, hi) == (0.0, ln):
+                    continue
+                if hi - lo <= tol:
+                    drop.add(k)
+                    continue
+                pa, pb = line.interpolate(lo), line.interpolate(hi)
+                cut[k] = ('T', net, [(round(pa.x, 4), round(pa.y, 4)), (round(pb.x, 4), round(pb.y, 4))], li, w)
+            if not drop and not cut and not add:
                 break
             for k in drop:
                 if items[k][0] == 'V':
@@ -356,17 +413,21 @@ class Router:
                     self.vias = [v for v in self.vias if (v[0], v[1], v[2]) != (items[k][2], items[k][3], items[k][1])]
                 else:
                     ns += 1
-            items = [it for k, it in enumerate(items) if k not in drop]
+            nt += len(cut)
+            items = [cut.get(k, it) for k, it in enumerate(items) if k not in drop] + add
         self.items = items
-        return nv, ns
+        return nv, ns, nt
 
     def snapshot(self):
         return (list(self.items), self.owner.copy(), self.routed.copy(), self.via_block.copy(), list(self.vias),
-                self.track_count, {k: list(v) for k, v in self.fixed.items()}, self.fixed_mask.copy())
+                self.track_count, {k: list(v) for k, v in self.fixed.items()}, self.fixed_mask.copy(),
+                {k: list(v) for k, v in self.fixed_tracks.items()}, {k: list(v) for k, v in self.fixed_paths.items()})
 
     def restore(self, snap):
-        items, owner, routed, vb, vias, tc, fixed, fm = snap
+        items, owner, routed, vb, vias, tc, fixed, fm, ft, fp = snap
         self.fixed_mask[...] = fm
+        self.fixed_tracks = {k: list(v) for k, v in ft.items()}
+        self.fixed_paths = {k: list(v) for k, v in fp.items()}
         self.items = list(items)
         self.owner[...] = owner
         self.routed[...] = routed
@@ -437,6 +498,7 @@ class Router:
             di = abs(k // wd - tci); dj = abs(k % wd - tcj)
             return max(0.0, (max(di, dj) + 0.41421 * min(di, dj)) - rad)
         INF = float('inf')
+        zones = [(zl, za - i0, zb - i0, zc - j0, zd - j0, zcost) for (zl, za, zb, zc, zd, zcost) in self.dir_zones]
         g = {}
         prev = {}
         heap = []
@@ -464,6 +526,10 @@ class Router:
             ci, cj = divmod(k, wd)
             row = okb[L]
             dc = self.dir_cost.get(L)
+            for (zl, za, zb, zc, zd, zcost) in zones:
+                if zl == L and za <= ci < zb and zc <= cj < zd:
+                    dc = zcost
+                    break
             for di, dj, cst in DIRS:
                 if dc is not None:
                     cst = dc[0] if di == 0 else dc[1] if dj == 0 else dc[2]
@@ -752,6 +818,10 @@ class Router:
             ci, cj = divmod(k, wd)
             row, srow = okb[L], sfb[L]
             dc = self.dir_cost.get(L)
+            for (zl, za, zb, zc, zd, zcost) in self.dir_zones:
+                if zl == L and za <= ci < zb and zc <= cj < zd:
+                    dc = zcost
+                    break
             for di, dj, cst in DIRS:
                 if dc is not None:
                     cst = dc[0] if di == 0 else dc[1] if dj == 0 else dc[2]
@@ -849,6 +919,67 @@ class Router:
         self._mark_fixed(pts, w)
         return True
 
+    def stub_track(self, net, pts, w=0.15, clr=0.1):
+        """Explicit fixed F.Cu track (no via), checked against the clearance masks like stub()."""
+        xs = [p[0] for p in pts]; ys = [p[1] for p in pts]
+        i0, j0 = self.cell(min(xs), min(ys)); i1, j1 = self.cell(max(xs), max(ys))
+        m = int(1.0 / RES)
+        win = (max(i0 - m, 0), min(i1 + m + 1, self.H), max(j0 - m, 0), min(j1 + m + 1, self.W))
+        ok, _ = self.masks(net, w, clr, win)
+        code = self.code(net)
+        for a, b in zip(pts[:-1], pts[1:]):
+            n = int(max(abs(b[0] - a[0]), abs(b[1] - a[1])) / (RES / 2)) + 1
+            for t in range(n + 1):
+                x = a[0] + (b[0] - a[0]) * t / n; y = a[1] + (b[1] - a[1]) * t / n
+                i, j = self.cell(x, y)
+                if self.owner[0, i, j] == code:
+                    continue
+                if not ok[0][i - win[0], j - win[2]]:
+                    return False
+        self.add_track(net, pts, 0, w)
+        self.fixed_tracks.setdefault(net, []).append((pts, w))
+        self._mark_fixed(pts, w, via=False)
+        return True
+
+    def fixed_path(self, net, pts, layer, w, vias=(), clr=0.1):
+        """Pre-planned trunk: a polyline on `layer` plus vias, checked against the clearance masks, kept through
+        rip-up."""
+        xs = [p[0] for p in pts]; ys = [p[1] for p in pts]
+        i0, j0 = self.cell(min(xs), min(ys)); i1, j1 = self.cell(max(xs), max(ys))
+        m = int(1.0 / RES)
+        win = (max(i0 - m, 0), min(i1 + m + 1, self.H), max(j0 - m, 0), min(j1 + m + 1, self.W))
+        ok, via_ok = self.masks(net, w, clr, win)
+        code = self.code(net)
+        for a, b in zip(pts[:-1], pts[1:]):
+            n = int(max(abs(b[0] - a[0]), abs(b[1] - a[1])) / (RES / 2)) + 1
+            for t in range(n + 1):
+                x = a[0] + (b[0] - a[0]) * t / n; y = a[1] + (b[1] - a[1]) * t / n
+                i, j = self.cell(x, y)
+                if self.owner[layer, i, j] == code:
+                    continue
+                if not ok[layer][i - win[0], j - win[2]]:
+                    return (x, y)
+        for v in vias:
+            vi, vj = self.cell(*v)
+            if not via_ok[vi - win[0], vj - win[2]]:
+                return v
+        self.add_track(net, pts, layer, w)
+        for v in vias:
+            self.add_via(net, *v)
+        self.fixed_paths.setdefault(net, []).append((pts, layer, w, tuple(vias)))
+        g = LineString(pts).buffer(w / 2)
+        r = self._raster_mask(g)
+        if r:
+            a0, a1, b0, b1, mk = r
+            self.fixed_mask[layer, a0:a1, b0:b1] |= mk
+        for v in vias:
+            r = self._raster_mask(Point(*v).buffer(VIA_D / 2))
+            if r:
+                a0, a1, b0, b1, mk = r
+                for L in range(3):
+                    self.fixed_mask[L, a0:a1, b0:b1] |= mk
+        return True
+
     def pad_connected(self, net, ref, num):
         """True if routed copper of `net` already touches this pad."""
         code = self.code(net)
@@ -906,6 +1037,12 @@ class Router:
         for pts, w in self.fixed.get(net, []):              # escape stubs and plane vias stay
             self.add_track(net, pts, 0, w)
             self.add_via(net, *pts[-1])
+        for pts, w in self.fixed_tracks.get(net, []):
+            self.add_track(net, pts, 0, w)
+        for pts, layer, w, vias in self.fixed_paths.get(net, []):
+            self.add_track(net, pts, layer, w)
+            for v in vias:
+                self.add_via(net, *v)
 
     def nets_near(self, cells, radius=1.5, exclude=()):
         """Routed nets whose tracks/vias come within `radius` mm of any of the given cells."""

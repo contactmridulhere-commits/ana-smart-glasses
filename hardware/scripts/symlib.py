@@ -212,7 +212,7 @@ def build_custom_lib():
                            ref='U', width=12.7, footprint='Package_TO_SOT_SMD:SOT-23-6',
                            desc='1-key capacitive touch controller; TOG=1, AHLB=0 -> toggle mode, active high'))
     # wire pads / electrodes
-    for n in (2, 6, 7, 8):
+    for n in (2, 4, 7, 8):
         syms.append(box_symbol('WirePads_%d' % n, [(str(i + 1), 'P%d' % (i + 1), 'passive') for i in range(n)], [],
                                ref='J', width=7.62, desc='Solder pads for hand-soldered wires'))
     syms.append(box_symbol('TouchElectrode', [('1', 'ELECTRODE', 'passive')], [], ref='E', width=10.16,

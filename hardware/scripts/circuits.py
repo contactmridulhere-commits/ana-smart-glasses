@@ -1,14 +1,14 @@
 """Single source of truth for both ANA V1 temple boards: parts, values, footprints, LCSC numbers and nets.
 
-Board R  = "ana-main"  : right (display-side) temple: ESP32-U4WDH, USB-UART, MAX30102, SHT40, TTP223, LED.
-Board L  = "ana-power" : left temple: USB-C, TP4056 charger, DW01A/FS8205A protection, power path, switches,
-                         BT-headset power pads, LED, battery pads.
+Board R  = "ana-main"  : right (display-side) temple: ESP32-U4WDH, MAX30102, SHT40, TTP223, LED, OLED pads.
+Board L  = "ana-power" : left temple: USB-C, CP2102N USB-UART + auto-reset, TP4056 charger, DW01A/FS8205A
+                         protection, power path, switches, BT-headset power pads, LED, battery pads.
 The two boards are joined by an 8-wire frame link (same pin order on both boards):
-    1 VSYS  2 GND  3 USB_DP  4 USB_DN  5 GND  6 VBUS  7 CHRG_N  8 LED_K
+    1 VSYS  2 LED_K  3 GND  4 EN  5 IO0  6 CHRG_N  7 U0RXD (ESP32 RX)  8 U0TXD_R (ESP32 TX)
 """
 from dataclasses import dataclass, field
 
-LINK_ORDER = ['VSYS', 'GND', 'USB_DP', 'USB_DN', 'GND', 'VBUS', 'CHRG_N', 'LED_K']
+LINK_ORDER = ['VSYS', 'LED_K', 'GND', 'EN', 'IO0', 'CHRG_N', 'U0RXD', 'U0TXD_R']
 OLED_ORDER = ['GND', '3V3', 'SPI_CLK', 'SPI_MOSI', 'OLED_RST', 'OLED_DC', 'OLED_CS']  # 7-pin SPI OLED module order
 
 
@@ -89,12 +89,11 @@ def main_board():
         '24': 'SPI_CLK_MCU',    # GPIO4  -> OLED D0
         '13': 'BAT_ADC',        # GPIO33 ADC1_CH5 (top edge, next to the hinge-side corner)
         '34': 'MAX_INT',        # GPIO5  (open-drain INT, 10k pull-up keeps the strap high at boot)
-        '11': 'VBUS_SENSE',     # GPIO35 (input only; top edge, every other pin -> room for vias)
         '36': 'SPI_MOSI_MCU',   # GPIO23 (VSPI MOSI) -> OLED D1
         '39': 'I2C_SCL',        # GPIO22 (same I2C pins as V1)
         '42': 'I2C_SDA',        # GPIO21
-        '5': None, '6': None, '7': None, '8': None, '10': None, '12': None, '14': None, '18': None, '35': None,
-        '22': None, '38': None, '25': None, '27': None, '28': None, '29': None, '30': None, '31': None,
+        '5': None, '6': None, '7': None, '8': None, '10': None, '11': None, '12': None, '14': None, '18': None,
+        '35': None, '22': None, '38': None, '25': None, '27': None, '28': None, '29': None, '30': None, '31': None,
         '32': None, '33': None,
     }
     c.append(Comp('U1', 'ana:ESP32-U4WDH', 'ESP32-U4WDH', 'ana:QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias_NoBottomPad',
@@ -135,7 +134,7 @@ def main_board():
     B = 'Power'
     c += [
         Comp('J1', 'ana:WirePads_8', 'FRAME_LINK', FP_LINK, {str(i + 1): n for i, n in enumerate(LINK_ORDER)},
-             block=B, desc='8-wire link to left temple: VSYS GND D+ D- GND VBUS CHRG LED_K'),
+             block=B, desc='8-wire link to left temple: VSYS LED_K GND EN IO0 CHRG RX TX'),
         C('C19', '10uF/16V', 'VSYS', 'GND', B, 'VSYS entry bulk'),
         Comp('U2', 'Regulator_Linear:AP2112K-3.3', 'AP2112K-3.3', 'Package_TO_SOT_SMD:SOT-23-5',
              {'1': 'VSYS', '2': 'GND', '3': 'VSYS', '4': None, '5': '3V3'}, 'C51118', 'AP2112K-3.3TRG1', block=B,
@@ -144,27 +143,12 @@ def main_board():
         R('R9', '100k', 'VSYS', 'BAT_ADC', B, 'battery/VSYS divider'), R('R10', '100k', 'BAT_ADC', 'GND', B),
         C('C23', '100nF', 'BAT_ADC', 'GND', B, 'ADC filter'),
         R('R11', '100k', '3V3', 'CHRG_N', B, 'charger status pull-up'),
-        R('R12', '22k', 'VBUS', 'VBUS_SENSE', B, 'VBUS sense divider (CP2102N + GPIO25)'),
-        R('R13', '47k', 'VBUS_SENSE', 'GND', B),
     ]
-    B = 'USB-UART + auto-reset'
-    cp = {'1': None, '2': 'GND', '3': 'USB_DP', '4': 'USB_DN', '5': '3V3', '6': '3V3', '7': '3V3', '8': 'VBUS_SENSE',
-          '9': 'CP_RST', '10': None, '11': None, '12': None, '13': None, '14': None, '15': None, '16': None,
-          '17': None, '18': None, '19': 'RTS_N', '20': 'U0TXD_R', '21': 'U0RXD', '22': None, '23': 'DTR_N',
-          '24': None, '25': 'GND'}
+    B = 'Debug'
     c += [
-        Comp('U3', 'Interface_USB:CP2102N-Axx-xQFN24', 'CP2102N-A02-GQFN24', 'Package_DFN_QFN:QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm',
-             cp, 'C969151', 'CP2102N-A02-GQFN24R', block=B, desc='USB-UART, self-powered from 3.3 V'),
-        C('C24', '4.7uF', '3V3', 'GND', B), C('C25', '100nF', '3V3', 'GND', B), C('C26', '100nF', '3V3', 'GND', B, 'VIO'),
-        R('R14', '1k', '3V3', 'CP_RST', B, 'RSTb pull-up (datasheet: 1k)'),
-        Comp('Q1', 'Transistor_BJT:MMDT3904', 'MMDT3904', 'Package_TO_SOT_SMD:SOT-363_SC-70-6',
-             {'1': 'RTS_N', '2': 'Q1_B1', '6': 'EN', '3': 'IO0', '4': 'DTR_N', '5': 'Q1_B2'},
-             'C83572', 'MMDT3904-7-F', block=B, desc='ESP32 auto-reset (DTR/RTS)',
-             unit_pins={1: ['1', '2', '6'], 2: ['3', '4', '5']}),
-        R('R15', '10k', 'DTR_N', 'Q1_B1', B), R('R16', '10k', 'RTS_N', 'Q1_B2', B),
-        Comp('J2', 'ana:WirePads_6', 'DEBUG', 'ana:TestPads_1x06_P1.10mm',
-             {'1': '3V3', '2': 'GND', '3': 'U0TXD_R', '4': 'U0RXD', '5': 'EN', '6': 'IO0'},
-             block=B, desc='bring-up pads next to the CP2102N: 3V3 GND TX (after R5) RX EN IO0'),
+        Comp('J2', 'ana:WirePads_4', 'DEBUG', 'ana:TestPads_1x04_P1.10mm',
+             {'1': '3V3', '2': 'GND', '3': 'U0TXD_R', '4': 'U0RXD'},
+             block=B, desc='bring-up pads on the ear tip: 3V3 GND TX (after R5) RX; EN and IO0 are on J1'),
     ]
     B = 'Sensors'
     c += [
@@ -225,6 +209,27 @@ def power_board():
              {'1': 'USB_DP', '6': 'USB_DP', '3': 'USB_DN', '4': 'USB_DN', '5': 'VBUS', '2': 'GND'},
              'C7519', 'USBLC6-2SC6', block=B, desc='USB ESD'),
         C('C1', '4.7uF', 'VBUS', 'GND', B, 'VBUS input (<10 uF per USB spec)'),
+    ]
+    B = 'USB-UART + auto-reset'
+    cp = {'1': None, '2': 'GND', '3': 'USB_DP', '4': 'USB_DN', '5': 'CP_3V3', '6': 'CP_3V3', '7': 'VSYS',
+          '8': 'VBUS_SENSE', '9': 'CP_RST', '10': None, '11': None, '12': None, '13': None, '14': None, '15': None,
+          '16': None, '17': None, '18': None, '19': 'RTS_N', '20': 'U0TXD_R', '21': 'U0RXD', '22': None,
+          '23': 'DTR_N', '24': None, '25': 'GND'}
+    c += [
+        Comp('U4', 'Interface_USB:CP2102N-Axx-xQFN24', 'CP2102N-A02-GQFN24', 'ana:QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm_ThermalVias_NoBottomPad',
+             cp, 'C969151', 'CP2102N-A02-GQFN24R', block=B,
+             desc='USB-UART; on whenever the glasses are on (own 3.3 V regulator from VSYS), so its pins never '
+                  'back-power the ESP32'),
+        C('C8', '1uF', 'VSYS', 'GND', B, 'VREGIN'), C('C9', '1uF', 'CP_3V3', 'GND', B, 'VDD (regulator out)'),
+        C('C10', '100nF', 'CP_3V3', 'GND', B, 'VDD / VIO'),
+        R('R13', '22k', 'VBUS', 'VBUS_SENSE', B, 'VBUS sense divider (self-powered mode)'),
+        R('R14', '47k', 'VBUS_SENSE', 'GND', B),
+        R('R15', '1k', 'CP_3V3', 'CP_RST', B, 'RSTb pull-up (datasheet: 1k)'),
+        Comp('Q5', 'Transistor_BJT:MMDT3904', 'MMDT3904', 'Package_TO_SOT_SMD:SOT-363_SC-70-6',
+             {'1': 'RTS_N', '2': 'Q5_B1', '6': 'EN', '3': 'IO0', '4': 'DTR_N', '5': 'Q5_B2'},
+             'C83572', 'MMDT3904-7-F', block=B, desc='ESP32 auto-reset (DTR/RTS), drives EN/IO0 over the link',
+             unit_pins={1: ['1', '2', '6'], 2: ['3', '4', '5']}),
+        R('R16', '10k', 'DTR_N', 'Q5_B1', B), R('R17', '10k', 'RTS_N', 'Q5_B2', B),
     ]
     B = 'Charger'
     c += [

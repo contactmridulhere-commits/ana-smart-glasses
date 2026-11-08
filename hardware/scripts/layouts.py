@@ -18,22 +18,6 @@ def layout_main(bb):
     bb.place('J4', 7.1, 1.25, 0)                       # OLED wire pads (top row)
     bb.place('J1', 7.85, 7.85, 0)                      # frame-link wire pads (bottom row)
     bb.place('J3', 5.2, 4.7, 90)                       # external LED pads
-    # USB-serial bridge next to the frame-link pads: USB pins (left side) face the hinge pads, UART/DTR/RTS
-    # (top side) face the top edge, where they turn towards the ESP32 together with the bring-up pads.
-    bb.place('U3', 19.5, 5.0, 0)
-    bb.place('J2', 27.9, 0.85, 0)                      # bring-up pads (top edge, next to the CP2102N)
-    # CP2102N support parts kept off its hinge side, so the OLED and frame-link lines can fan in to J4/J1:
-    # 3V3 decoupling at its lower-left corner, VBUS divider and reset pull-up underneath, auto-reset pair right
-    bb.place('C26', 15.9, 5.75, 180)                   # VIO (pin 5)
-    bb.place('C24', 15.9, 6.75, 180)                   # VDD (pin 6)
-    bb.place('C25', 17.85, 8.35, 0)                    # VREGIN (pin 7)
-    bb.place('R12', 19.85, 8.35, 0)                    # VBUS -> VBUS_SENSE (pin 8)
-    bb.place('R13', 21.85, 8.35, 0)                    # VBUS_SENSE -> GND
-    bb.place('R14', 24.0, 8.3, 0)                      # RSTb pull-up (pin 9)
-    # DTR/RTS auto-reset pair, turned so both base pins (2 and 5) face their resistors directly
-    bb.place('Q1', 23.9, 4.2, 90)
-    bb.place('R16', 23.9, 1.93, 0)                     # RTS -> base 2 (pin 5, top middle)
-    bb.place('R15', 23.9, 6.47, 0)                     # DTR -> base 1 (pin 2, bottom middle)
     bb.place('E1', 31.5, 4.6, 0, back=True)            # touch electrode on the outer face
     bb.place('U7', 28.0, 4.6, 0)                       # TTP223
     bb.place('Q2', 34.5, 4.6, 0)                       # LED switch
@@ -61,6 +45,11 @@ def layout_main(bb):
         x, y = t.tip(s, t.h_tip(s) / 2)
         bb.place(ref, x, y, t.tip_rot + (90 if ref.startswith('C') else 0))
     s_k = s_ant - 1.45 - 0.35 - 2.0
+    # bring-up pads on the empty ear-tip section behind the bend, near the ESP32's UART pins (well clear of the
+    # antenna zone); keeps the hinge-end cluster and the top edge free for the long lines
+    s_j2 = 12.0
+    jx, jy = t.tip(s_j2, 2.0)                          # upper half: the RF feed line runs along the lower edge
+    bb.place('J2', jx, jy, t.tip_rot)
     bb.ant_zone = tip_poly(t, s_k, t.Lt, 0.0)
     bb.keepouts.append(bb.ant_zone)
     bb.s_ant = s_ant
@@ -97,9 +86,13 @@ def layout_main(bb):
     for i, (ref, rot) in enumerate((('L1', 90), ('C2', 90), ('C3', 90), ('C12', 90), ('R2', 270), ('C23', 90),
                                     ('R10', 90), ('R9', 90))):
         bb.place(ref, 81.3 - 1.4 * i, 1.05, rot)
-    for i, (ref, rot) in enumerate((('C8', 90), ('R7', 90), ('R6', 90), ('C7', 90), ('R11', 90), ('R3', 90),
-                                    ('C1', 90))):
-        bb.place(ref, 81.1 - 1.4 * i, 6.75, rot)
+    # bottom row: caps stand with their 3V3 pad towards the lane, resistors lie flat so both pads are reachable
+    # from the lane and a track still fits between them and the bottom edge
+    x = 81.56
+    for ref, rot in (('C8', 270), ('R7', 180), ('R6', 180), ('C7', 270), ('R11', 0), ('R3', 0), ('C1', 270)):
+        half = 0.46 if rot in (90, 270) else 0.93
+        bb.place(ref, x - half, 6.75, rot)
+        x -= 2 * half + 0.45
     # LDO input caps on its VIN side (left), output caps on its VOUT side (right)
     bb.place('C19', 59.9, 6.4, 90)
     bb.place('C20', 58.4, 6.4, 90)
@@ -120,7 +113,11 @@ def layout_power(bb):
     t = bb.t
     bb.place('D5', 1.0, 4.7, 180)                      # side LED at hinge end
     bb.place('J3', 7.85, 1.25, 0)                      # frame-link pads, top row
-    bb.place('J4', 4.9, 5.4, 90)                       # external LED pads
+    bb.place('J4', 3.6, 8.0, 0)                        # external LED pads, bottom corner at the hinge end
+    # USB-UART: UART / DTR / RTS pins face up to the link pads; its USB pins drop to the inner layers through
+    # escape vias on the left and run to the ESD part; the auto-reset pair sits under the EN / IO0 link pads
+    bb.place('U4', 12.5, 5.6, 0)
+    bb.place('Q5', 6.0, 4.0, 0)
     # USB-C: opening faces down out of the bottom edge
     xu = 20.5
     bb.place('J1', xu, t.h_straight(xu) - 3.65 + 0.05, 0)
@@ -148,6 +145,12 @@ def layout_power(bb):
         x, y = bb.pad_pos(*a)
         bb.autoplace(ref, (x, y), rots=rots, **kw)
 
+    hinge = Polygon([(2.0, 2.3), (15.4, 2.3), (15.4, 9.4), (2.0, 9.4)])
+    for ref, a in [('R16', ('Q5', '2')), ('R17', ('Q5', '5')), ('R15', ('U4', '9')), ('C9', ('U4', '6')),
+                   ('C10', ('U4', '5')), ('C8', ('U4', '7'))]:
+        near(ref, a, spacing=0.2, max_r=8.0, region=hinge)
+    for ref, a in [('R13', ('U1', '5')), ('R14', ('U1', '5'))]:      # VBUS sense divider by the ESD part
+        near(ref, a, spacing=0.2, max_r=8.0)
     for ref, a in [('R1', ('J1', 'A5')), ('R2', ('J1', 'B5')), ('C1', ('U1', '5')),
                    ('R3', ('U2', '2')), ('C2', ('U2', '4')), ('C3', ('U2', '5')),
                    ('R4', ('D1', '2')), ('R5', ('D2', '2')), ('D3', ('U2', '7')),

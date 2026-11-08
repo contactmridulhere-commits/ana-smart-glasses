@@ -25,9 +25,9 @@
 #define I2C_SCL     22
 #define PIN_MAX_INT 5    // MAX30102 interrupt (not used by this sketch)
 #define PIN_TOUCH   14   // TTP223 output (toggle mode; also switches the flashlight LEDs)
-#define PIN_BAT_ADC 33   // VSYS / 2 (battery voltage when USB is not plugged in), ADC1_CH5
-#define PIN_VBUS    35   // high when USB-C power is present (input-only pin)
+#define PIN_BAT_ADC 33   // VSYS / 2, ADC1_CH5: the battery voltage, or about 4.6 V while USB powers the glasses
 #define PIN_CHRG    13   // low while the TP4056 is charging
+#define VSYS_USB_MIN 4.40f   // VSYS above this means USB is plugged in (a LiPo never goes above 4.2-4.3 V)
 #include <Adafruit_SHT4x.h>
 Adafruit_SHT4x sht4;
 #else
@@ -105,7 +105,6 @@ void setup() {
   SPI.begin(OLED_CLK, -1, OLED_MOSI, OLED_CS);   // must run before display.begin()
   Wire.begin(I2C_SDA, I2C_SCL);            // MAX30102 + SHT40 share this bus
   pinMode(PIN_TOUCH, INPUT);
-  pinMode(PIN_VBUS, INPUT);
   pinMode(PIN_CHRG, INPUT);                // 100k pull-up on the board
   analogSetPinAttenuation(PIN_BAT_ADC, ADC_11db);
 #endif
@@ -140,10 +139,10 @@ void readSlowSensors() {
 #if ANA_TEMPLE_PCB
   sensors_event_t humidity, temp;
   if (sht4.getEvent(&humidity, &temp)) tempC = temp.temperature;
-  usbPresent = digitalRead(PIN_VBUS) == HIGH;
-  charging = usbPresent && digitalRead(PIN_CHRG) == LOW;
+  charging = digitalRead(PIN_CHRG) == LOW;
   lightOn = digitalRead(PIN_TOUCH) == HIGH;
   float vsys = 2.0f * analogReadMilliVolts(PIN_BAT_ADC) / 1000.0f;   // 100k/100k divider
+  usbPresent = charging || vsys > VSYS_USB_MIN;   // with USB in, VSYS comes from VBUS through a Schottky diode
   batteryPercent = usbPresent ? -1 : lipoPercent(vsys);
 #else
   tempC = dht.readTemperature();

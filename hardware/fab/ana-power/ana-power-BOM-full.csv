@@ -4,6 +4,16 @@ R1,5.1k,Resistor_SMD:R_0402_1005Metric,C25905,,JLCPCB,UFP Rd
 R2,5.1k,Resistor_SMD:R_0402_1005Metric,C25905,,JLCPCB,UFP Rd
 U1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,C7519,USBLC6-2SC6,JLCPCB,USB ESD
 C1,4.7uF,Capacitor_SMD:C_0402_1005Metric,C469468,,JLCPCB,VBUS input (<10 uF per USB spec)
+U4,CP2102N-A02-GQFN24,ana:QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm_ThermalVias_NoBottomPad,C969151,CP2102N-A02-GQFN24R,JLCPCB,"USB-UART; on whenever the glasses are on (own 3.3 V regulator from VSYS), so its pins never back-power the ESP32"
+C8,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,VREGIN
+C9,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,VDD (regulator out)
+C10,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,VDD / VIO
+R13,22k,Resistor_SMD:R_0402_1005Metric,C25768,,JLCPCB,VBUS sense divider (self-powered mode)
+R14,47k,Resistor_SMD:R_0402_1005Metric,C25792,,JLCPCB,
+R15,1k,Resistor_SMD:R_0402_1005Metric,C11702,,JLCPCB,RSTb pull-up (datasheet: 1k)
+Q5,MMDT3904,Package_TO_SOT_SMD:SOT-363_SC-70-6,C83572,MMDT3904-7-F,JLCPCB,"ESP32 auto-reset (DTR/RTS), drives EN/IO0 over the link"
+R16,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
+R17,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
 U2,TP4056,Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm,C16581,TP4056-42-ESOP8,JLCPCB,"Li-ion linear charger, 4.2 V"
 R3,27k,Resistor_SMD:R_0402_1005Metric,C25771,,JLCPCB,Ichg = 1200/27k = 44 mA (0.7C for 60 mAh)
 C2,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,

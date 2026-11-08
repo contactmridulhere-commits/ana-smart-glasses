@@ -1,9 +1,9 @@
-(footprint "TestPads_1x06_P1.10mm"
+(footprint "TestPads_1x04_P1.10mm"
 	(version 20241229)
 	(generator "ana_gen")
 	(generator_version "1.0")
 	(layer "F.Cu")
-	(descr "Bring-up pads 3V3 GND TX RX EN IO0 (pogo or wire)")
+	(descr "Bring-up pads 3V3 GND TX RX (pogo or wire)")
 	(tags "")
 	(property "Reference" "REF**"
 		(at 0 -1.5 0)
@@ -16,10 +16,10 @@
 			)
 		)
 	)
-	(property "Value" "TestPads_1x06_P1.10mm"
+	(property "Value" "TestPads_1x04_P1.10mm"
 		(at 0 1.5 0)
 		(layer "F.Fab")
-		(uuid "462f6d56-04e8-5725-a906-431ed3831b7a")
+		(uuid "ee19808f-330c-56df-b78b-c0856a512652")
 		(effects
 			(font
 				(size 0.6 0.6)
@@ -51,11 +51,11 @@
 			)
 		)
 	)
-	(property "Description" "Bring-up pads 3V3 GND TX RX EN IO0 (pogo or wire)"
+	(property "Description" "Bring-up pads 3V3 GND TX RX (pogo or wire)"
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "4eb3a2aa-1d9d-500d-91e8-3dce0a5c4448")
+		(uuid "67cebef9-328f-53c6-b8d5-8381fcb91f8b")
 		(effects
 			(font
 				(size 0.6 0.6)
@@ -65,62 +65,50 @@
 	)
 	(attr smd exclude_from_pos_files exclude_from_bom)
 	(pad "1" smd circle
-		(at -2.75 0)
-		(size 0.8 0.8)
-		(layers "F.Cu" "F.Mask")
-		(uuid "91e5b498-ca57-5c9c-896c-8728ce255688")
-	)
-	(pad "2" smd circle
 		(at -1.65 0)
 		(size 0.8 0.8)
 		(layers "F.Cu" "F.Mask")
-		(uuid "15f5f702-0f59-5188-be74-bf0fb7274aec")
+		(uuid "d13f47da-56ef-5e6f-bef1-6c5eda11c17f")
 	)
-	(pad "3" smd circle
+	(pad "2" smd circle
 		(at -0.55 0)
 		(size 0.8 0.8)
 		(layers "F.Cu" "F.Mask")
-		(uuid "79114cd6-c9f4-58cd-b77c-52a7a8c85bcb")
+		(uuid "1e370873-641f-5fe1-801e-0f4d1a37328b")
 	)
-	(pad "4" smd circle
+	(pad "3" smd circle
 		(at 0.55 0)
 		(size 0.8 0.8)
 		(layers "F.Cu" "F.Mask")
-		(uuid "4addd71a-7049-56e1-915d-0a1b772cc7e6")
+		(uuid "e4f7d9cc-d398-51f5-be6e-cb2820d0c270")
 	)
-	(pad "5" smd circle
+	(pad "4" smd circle
 		(at 1.65 0)
 		(size 0.8 0.8)
 		(layers "F.Cu" "F.Mask")
-		(uuid "99675242-ecf7-572f-9737-7a00a95f08fc")
-	)
-	(pad "6" smd circle
-		(at 2.75 0)
-		(size 0.8 0.8)
-		(layers "F.Cu" "F.Mask")
-		(uuid "a7caa9d1-328c-53ed-82e8-2378a4cd022d")
+		(uuid "08a17a17-c900-526b-8169-d5fd5ef97dcc")
 	)
 	(fp_circle
-		(center -2.75 -0.62)
-		(end -2.65 -0.62)
+		(center -1.65 -0.62)
+		(end -1.55 -0.62)
 		(stroke
 			(width 0.08)
 			(type solid)
 		)
 		(fill yes)
 		(layer "F.SilkS")
-		(uuid "ee200b97-7284-5470-b7ff-4fc2fcde2bbb")
+		(uuid "ef2f3088-6d93-53dd-8b2a-3d378d95dc8d")
 	)
 	(fp_rect
-		(start -3.35 -0.8)
-		(end 3.35 0.6)
+		(start -2.25 -0.8)
+		(end 2.25 0.6)
 		(stroke
 			(width 0.05)
 			(type solid)
 		)
 		(fill no)
 		(layer "F.CrtYd")
-		(uuid "dfb8a3f3-421a-5715-99d7-46ca761f7a6e")
+		(uuid "4b5647b6-2eec-5e9c-a659-4743c0dbda71")
 	)
 	(embedded_fonts no)
 )

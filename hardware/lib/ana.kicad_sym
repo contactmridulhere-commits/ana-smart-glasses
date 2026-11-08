@@ -1400,7 +1400,7 @@
 			)
 		)
 	)
-	(symbol "WirePads_6"
+	(symbol "WirePads_4"
 		(pin_names
 			(offset 1.016)
 		)
@@ -1408,15 +1408,15 @@
 		(in_bom yes)
 		(on_board yes)
 		(property "Reference" "J"
-			(at -3.81 10.39 0)
+			(at -3.81 7.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Value" "WirePads_6"
-			(at 3.81 10.39 0)
+		(property "Value" "WirePads_4"
+			(at 3.81 7.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1424,7 +1424,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 0 -10.89 0)
+			(at 0 -8.35 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1433,7 +1433,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 -12.89 0)
+			(at 0 -10.35 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1442,7 +1442,7 @@
 			)
 		)
 		(property "Description" "Solder pads for hand-soldered wires"
-			(at 0 -14.89 0)
+			(at 0 -12.35 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1450,10 +1450,10 @@
 				(hide yes)
 			)
 		)
-		(symbol "WirePads_6_0_1"
+		(symbol "WirePads_4_0_1"
 			(rectangle
-				(start -3.81 8.89)
-				(end 3.81 -8.89)
+				(start -3.81 6.35)
+				(end 3.81 -6.35)
 				(stroke
 					(width 0.254)
 					(type default)
@@ -1463,9 +1463,9 @@
 				)
 			)
 		)
-		(symbol "WirePads_6_1_1"
+		(symbol "WirePads_4_1_1"
 			(pin passive line
-				(at -6.35 6.35 0)
+				(at -6.35 3.81 0)
 				(length 2.54)
 				(name "P1"
 					(effects
@@ -1483,7 +1483,7 @@
 				)
 			)
 			(pin passive line
-				(at -6.35 3.81 0)
+				(at -6.35 1.27 0)
 				(length 2.54)
 				(name "P2"
 					(effects
@@ -1501,7 +1501,7 @@
 				)
 			)
 			(pin passive line
-				(at -6.35 1.27 0)
+				(at -6.35 -1.27 0)
 				(length 2.54)
 				(name "P3"
 					(effects
@@ -1519,7 +1519,7 @@
 				)
 			)
 			(pin passive line
-				(at -6.35 -1.27 0)
+				(at -6.35 -3.81 0)
 				(length 2.54)
 				(name "P4"
 					(effects
@@ -1529,42 +1529,6 @@
 					)
 				)
 				(number "4"
-					(effects
-						(font
-							(size 1.016 1.016)
-						)
-					)
-				)
-			)
-			(pin passive line
-				(at -6.35 -3.81 0)
-				(length 2.54)
-				(name "P5"
-					(effects
-						(font
-							(size 1.016 1.016)
-						)
-					)
-				)
-				(number "5"
-					(effects
-						(font
-							(size 1.016 1.016)
-						)
-					)
-				)
-			)
-			(pin passive line
-				(at -6.35 -6.35 0)
-				(length 2.54)
-				(name "P6"
-					(effects
-						(font
-							(size 1.016 1.016)
-						)
-					)
-				)
-				(number "6"
 					(effects
 						(font
 							(size 1.016 1.016)

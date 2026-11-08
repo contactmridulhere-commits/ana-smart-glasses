@@ -61,15 +61,16 @@ def build(name, priority=()):
     t0 = time.time()
     meta = circuits.BOARDS[name]
     comps = meta['build']()
-    d = os.path.join(HW, name)
+    d = os.path.join(HW, name + os.environ.get('ANA_TRY', ''))
     project.write(d, name)
     notes = [
         'Board: 4-layer 0.8 mm FR-4, JLCPCB rules (0.1/0.1 mm, vias 0.4/0.2 mm). All SMT parts on F (top) side.',
-        'Frame link (8 wires, same order on both temples): 1 VSYS 2 GND 3 USB_DP 4 USB_DN 5 GND 6 VBUS 7 CHRG_N 8 LED_K',
+        'Frame link (8 wires, same order on both temples): ' +
+        ' '.join('%d %s' % (i + 1, n) for i, n in enumerate(circuits.LINK_ORDER)),
     ]
     if name == 'ana-main':
         notes.append('ESP32 GPIO map: OLED CLK=4 MOSI=23 CS=15 DC=26 RST=27 | I2C SDA=21 SCL=22 | MAX_INT=5 | '
-                     'TOUCH=14 | BAT_ADC=33 | VBUS=35 | CHRG=13 | 3V3 routed, 3V3 pour on In2')
+                     'TOUCH=14 | BAT_ADC=33 | CHRG=13 | UART0 TX=1 RX=3 | 3V3 routed, 3V3 pour on In2')
     schgen.generate(name, meta['title'], meta['rev'], comps, os.path.join(d, name + '.kicad_sch'), notes)
     log(name, 'schematic written')
 
@@ -100,16 +101,17 @@ def build(name, priority=()):
         # two signal layers on a long, narrow board: B.Cu carries the long runs along the temple (sideways steps
         # cost more there), so a net crossing the board does it on F.Cu and never walls off B.Cu
         R.dir_cost = {0: (1.6, 1.0, 1.6), 1: (1.0, 3.0, 2.6), 2: (1.0, 3.0, 2.6)}
+
         # In2 is a routing layer too (3V3 is routed as a net, with a 3V3 pour filling the free space on In2);
         # nothing runs under the touch electrode on In2
     nets = circuits.nets_of(comps)
     # exit corridors for fine-pitch parts before anything is routed
     if name == 'ana-main':
-        for ref in ('U3', 'U4', 'U7', 'Q1', 'U2', 'U5', 'U6'):     # (not U1: its top/bottom bands are too thin)
+        for ref in ('U4', 'U7', 'U2', 'U5', 'U6'):     # (not U1: its top/bottom bands are too thin)
             R.reserve_escapes(ref)
     else:
         R.reserve_escapes('J1', length=0.7, direction=(0, 1))
-        for ref in ('U1', 'U2', 'U3', 'Q1'):
+        for ref in ('U1', 'U2', 'U3', 'Q1', 'U4', 'Q5'):
             R.reserve_escapes(ref)
     if name == 'ana-main':
         R.block_area(bb.ant_zone, nets_allowed=('RF_FEED', 'RF_MID'), novia=True)
@@ -179,12 +181,27 @@ def build(name, priority=()):
         log('  tip stub 46 3V3', 'ok' if ok_ else 'FAILED')
         ok_ = R.stub('3V3', [(xe - 0.2, ty[43]), (xe + 2.75, ty[43]), (xe + 2.75, 5.2)], w=0.15)
         log('  tip stub 43 3V3', 'ok' if ok_ else 'FAILED')
+        # hinge side: parallel fingers into the free centre lane that end in vias staggered so that every
+        # finger still running keeps its clearance to the vias of the ones that already ended
+        xp = cx - 2.85 + 0.2                             # inside the pad
+        yk = {k: cy - 1.575 + (k - 15) * 0.35 for k in range(15, 25)}
+        fingers = {15: [(xp, yk[15]), (83.0, yk[15]), (82.6, 1.95)],
+                   16: [(xp, yk[16]), (80.9, yk[16])],
+                   17: [(xp, yk[17]), (82.2, yk[17]), (81.95, 3.25)],
+                   19: [(xp, yk[19]), (81.45, yk[19]), (81.3, 3.55)],
+                   20: [(xp, yk[20]), (80.4, yk[20])],
+                   21: [(xp, yk[21]), (82.2, yk[21]), (81.95, 4.65)],
+                   23: [(xp, yk[23]), (77.4, yk[23])]}
+        for pin, pts in fingers.items():
+            net = bb.netmap.get(('U1', str(pin)), '').lstrip('/')
+            ok_ = R.stub(net, pts, w=0.15)
+            log('  hinge escape', pin, net, 'ok' if ok_ else 'FAILED')
+        net24 = bb.netmap.get(('U1', '24'), '').lstrip('/')
+        ok_ = R.stub_track(net24, [(xp, yk[24]), (cx - 2.85 - 1.35, yk[24])], w=0.15)
+        log('  hinge finger 24', net24, 'ok' if ok_ else 'FAILED')
         plan = []
-        for pin, row in ((15, 1), (16, 2), (17, 3), (19, 1), (20, 2), (21, 3), (23, 1), (24, 2)):   # hinge side
-            plan.append((str(pin), (cx - 2.85 - 0.45 - 0.6 * (row - 1), cy - 1.575 + (pin - 15) * 0.35)))
-        for pin in (9, 11, 13):                                                                     # top edge
-            plan.append((str(pin), (cx + 2.275 - (pin - 1) * 0.35, 0.58)))
-        plan.append(('4', (87.45, 0.58)))                                                          # VDD3P3
+        for pin, x in ((4, 87.45), (9, 86.3), (13, 84.9)):                                     # top edge
+            plan.append((str(pin), (x, 0.58)))
         for pin, x in ((34, 87.35), (36, 88.05), (37, 88.75)):                                     # bottom edge
             plan.append((str(pin), (x, 7.15)))
         plan.append(('1', (89.75, 1.5)))                                                           # 3V3 corner
@@ -197,19 +214,52 @@ def build(name, priority=()):
                 nfo += 1
                 log('  ESP32 escape failed', pin, net)
         log(name, 'ESP32 escape vias placed:', len(plan) - nfo, 'of', len(plan))
+        # escape via for the LED switch drain (to the right, off the touch electrode)
+        esc = []
+        px, py = bb.pad_pos('Q2', '3'); esc.append((('Q2', '3'), [(px + 0.56, py), (px + 1.86, py)]))
+        for key, pts in esc:
+            net = bb.netmap.get(key, '').lstrip('/')
+            ok_ = R.stub(net, pts, w=0.15)
+            log('  escape', key, net, 'ok' if ok_ else 'FAILED')
+        # EN pull-up and EN capacitor sit side by side in the top row: join their EN pads directly
+        ok_ = R.stub_track('EN', [bb.pad_pos('R2', '2'), bb.pad_pos('C12', '1')], w=0.2)
+        log('  EN link R2-C12', 'ok' if ok_ else 'FAILED')
+        # VSYS trunk, 0.4 mm on B.Cu: from a via at the regulator input along the bottom edge (0.6 mm inside
+        # it), over the frame-link pad row and down into J1 pad 1 (VSYS)
+        jx1, jy1 = bb.pad_pos('J1', '1')
+        xb = 14.6
+        trunk = [(60.9, 7.55), (xb, temple.h_straight(xb) - 0.62), (xb, 6.4), (jx1, 6.4), (jx1, jy1 - 0.5)]
+        ok_ = R.fixed_path('VSYS', trunk, layer=2, w=0.4, vias=[(60.9, 7.55)])
+        log('  VSYS trunk', 'ok' if ok_ is True else 'FAILED at %s' % (ok_,))
         # every GND pad drops its own via into the In1 plane before any signal
         gnd_fanout(1.6)
+        # no vias between the ESP32's hinge-side fingers: they leave as parallel tracks and spread out first
+        R.no_vias(Polygon([(78.0, 2.0), (84.0, 2.0), (84.0, 5.8), (78.0, 5.8)]))
         # 3) short local nets first, then the long lines (the ESP32's cramped tip side first), power last
         # hinge pad rows are fed from one side, so their nets go in order of pad position (far end first):
         # each takes the lane nearest its row and the next one passes outside it (a staircase)
         main_order = ['XTAL_P', 'XTAL_IN', 'XTAL_N', 'CAP1', 'VDD_SDIO', 'VDD3P3', 'SPI_CLK_MCU', 'SPI_MOSI_MCU',
-                      'U0TXD', 'BAT_ADC',
-                      'Q1_B1', 'Q1_B2', 'CP_RST', 'RTS_N', 'DTR_N', 'USB_DP', 'USB_DN', 'VBUS',  # CP2102N cluster
-                      '3V3',
-                      'EN', 'VBUS_SENSE', 'TOUCH', 'CHRG_N', 'IO0',          # ESP32 top / hinge-side long lines
+                      'U0TXD', 'BAT_ADC', 'TOUCH_PAD', 'LED1_A', 'LEDX1_A',
+                      '3V3', 'VSYS',
+                      'TOUCH',
                       'OLED_CS', 'OLED_DC', 'OLED_RST', 'SPI_MOSI', 'SPI_CLK',          # J4 pads 7, 6, 5, 4, 3
-                      'LED_K', 'VSYS',
-                      '1V8', 'I2C_SCL', 'I2C_SDA', 'U0RXD', 'U0TXD_R', 'MAX_INT']
+                      'U0TXD_R', 'U0RXD', 'CHRG_N', 'IO0', 'EN', 'LED_K',               # J1 pads 8, 7, 6, 5, 4, 2
+                      '1V8', 'I2C_SCL', 'I2C_SDA', 'MAX_INT']
+        seed = os.environ.get('ANA_SEED', '205')      # 205: the routing order that gives the committed board
+        if seed:
+            # exploration: shuffle the long lines (the J4 and J1 staircases keep their pad order)
+            import random
+            rng = random.Random(int(seed))
+            head = main_order[:main_order.index('VSYS') + 1]
+            tail = main_order[len(head):]
+            rng.shuffle(tail)
+            for stair in (['OLED_CS', 'OLED_DC', 'OLED_RST', 'SPI_MOSI', 'SPI_CLK'],
+                          ['U0TXD_R', 'U0RXD', 'CHRG_N', 'IO0', 'EN', 'LED_K']):
+                slots = sorted(tail.index(n) for n in stair)
+                for k, n in zip(slots, stair):
+                    tail[k] = n
+            main_order = head + tail
+            log(name, 'order (seed %s):' % seed, tail)
         rest = [n for n in nets if n not in main_order and n not in ('GND', 'LNA_IN', 'RF_MID', 'RF_FEED')]
         rest.sort(key=lambda n: (0 if n in spec else 1, len(nets[n])))
         seq = [n for n in priority if n in nets and n != 'GND']
@@ -217,6 +267,17 @@ def build(name, priority=()):
         for net in seq:
             do(net)
     else:
+        # CP2102N USB pins (left side): short stubs to staggered vias, so D+ and D- both reach the inner layers
+        for pin, dy in (('3', -0.3), ('4', 0.3)):
+            px, py = bb.pad_pos('U4', pin)
+            net = bb.netmap.get(('U4', pin), '').lstrip('/')
+            ok_ = R.stub(net, [(px + 0.2, py), (px - 0.55, py), (px - 0.9, py + dy)], w=0.15)
+            log('  CP2102N USB escape', pin, net, 'ok' if ok_ else 'FAILED')
+        # CP2102N GND pin 2 joins the exposed pad (its thermal vias reach the In1 plane) with a short F.Cu link
+        px, py = bb.pad_pos('U4', '2')
+        ux, uy = pcbgen.local(bb.fps['U4'].GetPosition())
+        ok_ = R.stub_track('GND', [(px, py), (ux - 0.9 if px < ux else ux + 0.9, py)], w=0.2)
+        log('  CP2102N GND pin 2 -> exposed pad', 'ok' if ok_ else 'FAILED')
         jx, jy = pcbgen.local(bb.fps['J1'].GetPosition())
         for dx, sx in ((2.45, 2.15), (-2.45, -2.15)):          # VBUS pads A9/B4 and A4/B9
             ok_ = R.stub('VBUS', [(jx + dx, jy - 3.5), (jx + sx, jy - 3.15), (jx + sx, jy - 1.6)], w=0.15)
@@ -238,7 +299,9 @@ def build(name, priority=()):
     def score():
         return sum(len(v) for v in failed.values())
 
+    seen = set()
     for rnd in range(int(os.environ.get('ANA_RIPUP', '4'))):
+        sideways = 0
         stuck = list(failed)
         if not stuck:
             break
@@ -294,14 +357,21 @@ def build(name, priority=()):
                     if f4:
                         failed[q] = f4
             after = score()
-            if after >= before:
+            state = frozenset((k, tuple(v)) for k, v in failed.items())
+            sideways_ok = (after == before and sideways < 3 and state not in seen and
+                           state != frozenset((k, tuple(v)) for k, v in saved.items()))
+            if after < before or sideways_ok:
+                seen.add(state)
+                improved = True
+                if after == before:
+                    sideways += 1
+                log('   rip-up %-12s moving %s: %d -> %d unrouted, kept%s' %
+                    (net, sorted(blk), before, after, ' (sideways)' if after == before else ''))
+            else:
                 R.restore(snap)
                 failed.clear()
                 failed.update(saved)
                 log('   rip-up %-12s moving %s: %d -> %d unrouted, undone' % (net, sorted(blk), before, after))
-            else:
-                improved = True
-                log('   rip-up %-12s moving %s: %d -> %d unrouted, kept' % (net, sorted(blk), before, after))
         if not improved:
             break
     if name == 'ana-main':
@@ -330,10 +400,16 @@ def build(name, priority=()):
         avoid = bb.ant_zone.union(bb.e_poly).union(bb.sht_poly)
     if avoid is not None:
         avoid = avoid.buffer(VIA_KEEP)
+    # GND pads that could not get a via before routing (crowded spots): try again further out
+    for ref, pin in nets.get('GND', []):
+        pads = [p for p in bb.fps[ref].Pads() if p.GetNumber() == pin]
+        if pads and pads[0].GetAttribute() == pcbnew.PAD_ATTRIB_SMD and not R.pad_connected('GND', ref, pin):
+            if not (name == 'ana-main' and ref == 'U1') and not R.fanout('GND', ref, pin, w=0.2, max_d=3.5):
+                log('  late GND fan-out failed', ref, pin)
     ns = R.stitch('GND', pitch=2.2, avoid=avoid)
     log(name, 'stitching vias', ns)
-    pv, ps = R.prune(keep_nets=('GND', '3V3') if name == 'ana-main' else ('GND',))
-    log(name, 'pruned dangling copper: vias', pv, 'segments', ps)
+    pv, ps, pt = R.prune(keep_nets=('GND', '3V3') if name == 'ana-main' else ('GND',))
+    log(name, 'pruned dangling copper: vias', pv, 'segments', ps, 'shortened', pt)
     R.flush()                            # routed copper -> KiCad tracks and vias
     # silkscreen labels
     if name == 'ana-main':
@@ -353,7 +429,7 @@ def build(name, priority=()):
 
 
 def checks(name):
-    d = os.path.join(HW, name)
+    d = os.path.join(HW, name + os.environ.get('ANA_TRY', ''))
     rep = {}
     erc = os.path.join(d, 'erc.json')
     subprocess.run(['kicad-cli', 'sch', 'erc', '--severity-all', '--format', 'json', '-o', erc,
@@ -378,7 +454,7 @@ def build_best(name, attempts=3):
     """Route from scratch several times; nets that failed move to the front of the queue each time.
     Keeps the attempt with the fewest unrouted pins."""
     import shutil
-    d = os.path.join(HW, name)
+    d = os.path.join(HW, name + os.environ.get('ANA_TRY', ''))
     best, priority = None, []
     for a in range(attempts):
         failed = build(name, priority)

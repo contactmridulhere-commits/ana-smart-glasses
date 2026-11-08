@@ -1,5 +1,6 @@
 """Custom footprints for the ANA temple boards (written as .kicad_mod S-expressions)."""
 import os
+import re
 import uuid
 
 from sexpr import Sym, dump
@@ -74,25 +75,31 @@ SMD_NOPASTE = ('F.Cu', 'F.Mask')
 
 KICAD_FP = '/usr/share/kicad/footprints'
 ESP32_FP = 'QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias_NoBottomPad'
+CP2102N_FP = 'QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm_ThermalVias_NoBottomPad'
 
 
-def esp32_footprint():
-    """KiCad's QFN-48 (5x5, 0.35 mm) thermal-via footprint without its bottom-side copper pad: the 16 vias still
-    tie the exposed pad to the In1 GND plane, and tracks can pass under the chip on B.Cu between them."""
-    src = os.path.join(KICAD_FP, 'Package_DFN_QFN.pretty', 'QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias.kicad_mod')
-    dst = os.path.join(LIB, ESP32_FP + '.kicad_mod')
+def no_bottom_pad(base, new_name, ep, size):
+    """Copy KiCad's thermal-via QFN footprint `base` without its bottom-side copper pad: the thermal vias still tie
+    the exposed pad to the In1 GND plane, and tracks can pass under the chip on B.Cu between them."""
+    src = os.path.join(KICAD_FP, 'Package_DFN_QFN.pretty', base + '.kicad_mod')
+    dst = os.path.join(LIB, new_name + '.kicad_mod')
     if not os.path.exists(src):
         return                                   # keep the committed copy
     txt = open(src, encoding='utf-8').read()
-    blk = ('\t(pad "49" smd rect\n\t\t(at 0 0)\n\t\t(size 3.7 3.7)\n\t\t(property pad_prop_heatsink)\n'
-           '\t\t(layers "B.Cu")\n\t\t(zone_connect 2)\n\t)\n')
+    blk = ('\t(pad "%s" smd rect\n\t\t(at 0 0)\n\t\t(size %s %s)\n\t\t(property pad_prop_heatsink)\n'
+           '\t\t(layers "B.Cu")\n\t\t(zone_connect 2)\n\t)\n') % (ep, size, size)
     assert blk in txt, 'unexpected library footprint layout'
     txt = txt.replace(blk, '')
-    txt = txt.replace('(footprint "QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias"', '(footprint "%s"' % ESP32_FP)
-    txt = txt.replace('(descr "QFN, 48 Pin', '(descr "No bottom-side pad (tracks may pass on B.Cu between the '
-                      'thermal vias). QFN, 48 Pin', 1)
+    txt = txt.replace('(footprint "%s"' % base, '(footprint "%s"' % new_name)
+    txt = re.sub(r'\(descr "', '(descr "No bottom-side pad (tracks may pass on B.Cu between the thermal vias). ',
+                 txt, count=1)
     with open(dst, 'w', encoding='utf-8') as f:
         f.write(txt)
+
+
+def esp32_footprint():
+    no_bottom_pad('QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias', ESP32_FP, '49', '3.7')
+    no_bottom_pad('QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm_ThermalVias', CP2102N_FP, '25', '2.6')
 
 
 def build():
@@ -127,14 +134,14 @@ def build():
         footprint('WirePads_1x%02d_P1.50mm' % n, '%d plated wire holes (0.6 mm drill, 1.0x1.8 mm pads) at 1.5 mm '
                   'pitch for hand-soldered wires' % n, items, attr=('through_hole', 'exclude_from_pos_files',
                                                                     'exclude_from_bom'))
-    # --- debug test pads: 6 round pads in a row
+    # --- debug test pads: 4 round pads in a row
     items = []
     pitch = 1.1
-    for i in range(6):
-        items.append(pad(str(i + 1), 'smd', 'circle', (i - 2.5) * pitch, 0, 0.8, 0.8, SMD_NOPASTE))
-    items.append(circle(-2.5 * pitch, -0.62, 0.1, 'F.SilkS', 0.08))
-    items.append(rect(-2.5 * pitch - 0.6, -0.8, 2.5 * pitch + 0.6, 0.6, 'F.CrtYd', 0.05))
-    footprint('TestPads_1x06_P1.10mm', 'Bring-up pads 3V3 GND TX RX EN IO0 (pogo or wire)', items,
+    for i in range(4):
+        items.append(pad(str(i + 1), 'smd', 'circle', (i - 1.5) * pitch, 0, 0.8, 0.8, SMD_NOPASTE))
+    items.append(circle(-1.5 * pitch, -0.62, 0.1, 'F.SilkS', 0.08))
+    items.append(rect(-1.5 * pitch - 0.6, -0.8, 1.5 * pitch + 0.6, 0.6, 'F.CrtYd', 0.05))
+    footprint('TestPads_1x04_P1.10mm', 'Bring-up pads 3V3 GND TX RX (pogo or wire)', items,
               attr=('smd', 'exclude_from_pos_files', 'exclude_from_bom'))
     # --- touch electrode (placed on the BACK side so the copper is on the outer face)
     items = [pad('1', 'smd', 'roundrect', 0, 0, 10.0, 4.0, ('F.Cu',), rr=0.25),
