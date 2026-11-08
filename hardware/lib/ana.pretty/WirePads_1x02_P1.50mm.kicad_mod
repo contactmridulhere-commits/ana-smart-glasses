@@ -1,0 +1,117 @@
+(footprint "WirePads_1x02_P1.50mm"
+	(version 20241229)
+	(generator "ana_gen")
+	(generator_version "1.0")
+	(layer "F.Cu")
+	(descr "2 plated wire holes (0.6 mm drill, 1.0x1.8 mm pads) at 1.5 mm pitch for hand-soldered wires")
+	(tags "")
+	(property "Reference" "REF**"
+		(at 0 -1.5 0)
+		(layer "F.SilkS")
+		(uuid "f4e8e99d-d71e-5b1b-b033-888cb6f51d19")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "WirePads_1x02_P1.50mm"
+		(at 0 1.5 0)
+		(layer "F.Fab")
+		(uuid "f8bf2a5f-efad-54b8-9a0b-89cbcdcea04d")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5a054e3f-8663-5b01-b321-09f552c290aa")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9a142799-f074-5c90-a48f-44398b41c656")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Description" "2 plated wire holes (0.6 mm drill, 1.0x1.8 mm pads) at 1.5 mm pitch for hand-soldered wires"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "2015dbee-ce11-5172-9bb5-b66d3b146875")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(attr through_hole exclude_from_pos_files exclude_from_bom)
+	(pad "1" thru_hole roundrect
+		(at -0.75 0)
+		(size 1 1.8)
+		(layers "*.Cu" "*.Mask")
+		(roundrect_rratio 0.15)
+		(drill 0.6)
+		(uuid "d6705182-6dd8-5769-bc08-718fbdc2b794")
+	)
+	(pad "2" thru_hole roundrect
+		(at 0.75 0)
+		(size 1 1.8)
+		(layers "*.Cu" "*.Mask")
+		(roundrect_rratio 0.15)
+		(drill 0.6)
+		(uuid "d882eb34-3fe6-578e-8890-5b5a128d944c")
+	)
+	(fp_circle
+		(center -0.75 -1.12)
+		(end -0.63 -1.12)
+		(stroke
+			(width 0.08)
+			(type solid)
+		)
+		(fill yes)
+		(layer "F.SilkS")
+		(uuid "cc13d698-f956-5799-9eee-57ca38f35f3c")
+	)
+	(fp_rect
+		(start -1.5 -1.3)
+		(end 1.5 1.15)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "1131bf65-cf24-5ab8-9c27-076a2d83609e")
+	)
+	(fp_rect
+		(start -1.25 -0.9)
+		(end 1.25 0.9)
+		(stroke
+			(width 0.08)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "46d191da-51b8-5262-b57d-72cc6e079988")
+	)
+	(embedded_fonts no)
+)

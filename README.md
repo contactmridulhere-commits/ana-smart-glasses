@@ -36,11 +36,32 @@
 
 The MAX30102 uses the default I²C pins (SDA 21, SCL 22). The DHT11 data pin goes to GPIO 4.
 
+## Temple PCBs (V1.1 hardware)
+
+The hand-wired modules are now two custom PCBs shaped like the glasses' temples (straight, then bending down 30° behind the ear). Design files, fabrication outputs and the full write-up are in [`hardware/`](hardware/README.md).
+
+| Board | Temple | What is on it |
+|---|---|---|
+| `ana-main` | right (display side) | ESP32-U4WDH chip, chip antenna, MAX30102 (faces the skin), SHT40, TTP223 touch, side LED, OLED pads, bring-up pads |
+| `ana-power` | left | USB-C on the bottom edge (charging and flashing), CP2102N USB-serial with auto-reset, TP4056 charger, DW01A + FS8205A protection, power path, power and BT-headset switches, side LED, battery pads |
+
+On the temple PCBs the ESP32's in-package flash uses GPIO16/17, and every display and sensor line leaves the chip on the side facing the hinge, so the pins moved. `prototype_toy_.ino` has `#define ANA_TEMPLE_PCB 1` for the PCBs and `0` for the original wiring above.
+
+| Signal | GPIO on the PCB |
+|---|---|
+| OLED MOSI / CLK / CS | 23 / 4 / 15 |
+| OLED DC / RST | 26 / 27 |
+| I²C SDA / SCL (MAX30102 + SHT40) | 21 / 22 (unchanged) |
+| MAX30102 interrupt | 5 |
+| Touch (TTP223 output, also switches the LEDs) | 14 |
+| Battery voltage (VSYS / 2; above 4.4 V means USB is plugged in) | 33 |
+| Charging (TP4056 status) | 13 |
+
 ## Build and flash
 
 1. Install the ESP32 board package in the Arduino IDE.
-2. Install the libraries: `Adafruit SSD1306`, `Adafruit GFX`, `MAX3010x` by eepj, and `DHT sensor library` by Adafruit.
-3. Open `prototype_toy_.ino` with `filters.h` in the same folder, select your ESP32 board and upload.
+2. Install the libraries: `Adafruit SSD1306`, `Adafruit GFX`, `MAX3010x` by eepj, and `Adafruit SHT4x` (temple PCBs) or `DHT sensor library` by Adafruit (original wiring).
+3. Open `prototype_toy_.ino` with `filters.h` in the same folder, select your ESP32 board and upload. On the temple PCBs, slide the POWER switch on and plug USB-C into the left temple: the CP2102N and auto-reset circuit on the left temple flash the ESP32 over the frame wires, like a devkit.
 4. Pair your phone with the Bluetooth device and send the time string once, for example `T: 27/09/2026 18:45`.
 
 ## Where it goes next: V2

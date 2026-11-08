@@ -1,0 +1,49 @@
+Ref,Value,Footprint,LCSC,MPN,Fitted by,Note
+J1,USB-C,Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12,C165948,TYPE-C-31-M-12,JLCPCB,"charge + firmware upload, bottom edge near hinge"
+R1,5.1k,Resistor_SMD:R_0402_1005Metric,C25905,,JLCPCB,UFP Rd
+R2,5.1k,Resistor_SMD:R_0402_1005Metric,C25905,,JLCPCB,UFP Rd
+U1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,C7519,USBLC6-2SC6,JLCPCB,USB ESD
+C1,4.7uF,Capacitor_SMD:C_0402_1005Metric,C469468,,JLCPCB,VBUS input (<10 uF per USB spec)
+U4,CP2102N-A02-GQFN24,ana:QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm_ThermalVias_NoBottomPad,C969151,CP2102N-A02-GQFN24R,JLCPCB,"USB-UART; on whenever the glasses are on (own 3.3 V regulator from VSYS), so its pins never back-power the ESP32"
+C8,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,VREGIN
+C9,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,VDD (regulator out)
+C10,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,VDD / VIO
+R13,22k,Resistor_SMD:R_0402_1005Metric,C25768,,JLCPCB,VBUS sense divider (self-powered mode)
+R14,47k,Resistor_SMD:R_0402_1005Metric,C25792,,JLCPCB,
+R15,1k,Resistor_SMD:R_0402_1005Metric,C11702,,JLCPCB,RSTb pull-up (datasheet: 1k)
+Q5,MMDT3904,Package_TO_SOT_SMD:SOT-363_SC-70-6,C83572,MMDT3904-7-F,JLCPCB,"ESP32 auto-reset (DTR/RTS), drives EN/IO0 over the link"
+R16,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
+R17,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
+U2,TP4056,Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm,C16581,TP4056-42-ESOP8,JLCPCB,"Li-ion linear charger, 4.2 V"
+R3,27k,Resistor_SMD:R_0402_1005Metric,C25771,,JLCPCB,Ichg = 1200/27k = 44 mA (0.7C for 60 mAh)
+C2,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C3,4.7uF,Capacitor_SMD:C_0402_1005Metric,C469468,,JLCPCB,BAT pin
+D1,RED charging,LED_SMD:LED_0402_1005Metric,C130719,NCD0402R1,JLCPCB,
+R4,1k,Resistor_SMD:R_0402_1005Metric,C11702,,JLCPCB,
+D2,GREEN full,LED_SMD:LED_0402_1005Metric,C130723,NCD0402G1,JLCPCB,
+R5,1k,Resistor_SMD:R_0402_1005Metric,C11702,,JLCPCB,
+D3,RB521S30,Diode_SMD:D_SOD-523,C145179,RB521S30T1G,JLCPCB,isolates CHRG to ESP32 (no back-power when off)
+U3,DW01A,Package_TO_SOT_SMD:SOT-23-6,C351410,DW01A,JLCPCB,"Li-ion protection (OV 4.3 V, UV 2.4 V, OC)"
+R6,100,Resistor_SMD:R_0402_1005Metric,C25076,,JLCPCB,
+C4,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+R7,1k,Resistor_SMD:R_0402_1005Metric,C11702,,JLCPCB,CS/VM sense
+Q1,FS8205A,Package_TO_SOT_SMD:SOT-23-6,C908265,FS8205A,JLCPCB,"dual N-MOSFET, common drain"
+BT1,LiPo 3.7V ~60mAh,ana:BatteryPads_2x2.5mm,,,you (wire/pad),"cell in ear-bend tip, ~3.5 x 7 x 30 mm"
+D4,B5819WS,Diode_SMD:D_SOD-323,C64886,B5819WS,JLCPCB,USB -> system when plugged
+Q2,AO3401A,Package_TO_SOT_SMD:SOT-23,C15127,AO3401A,JLCPCB,"load sharing: battery -> system, off while USB present"
+R8,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,gate pull-down when USB absent
+C5,10uF,Capacitor_SMD:C_0603_1608Metric,C380317,,JLCPCB,
+Q3,AO3401A,Package_TO_SOT_SMD:SOT-23,C15127,AO3401A,JLCPCB,main power switch FET
+R9,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,off by default
+SW1,POWER,Button_Switch_SMD:SW_SPDT_Shouhan_MSK12C02,C431540,MSK12C02,JLCPCB,main power slide switch
+C6,10uF,Capacitor_SMD:C_0603_1608Metric,C380317,,JLCPCB,
+Q4,AO3401A,Package_TO_SOT_SMD:SOT-23,C15127,AO3401A,JLCPCB,BT headset power FET
+R10,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,
+SW2,BT,Button_Switch_SMD:SW_SPDT_Shouhan_MSK12C02,C431540,MSK12C02,JLCPCB,BT headset slide switch
+C7,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+J2,BT_HEADSET,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),to Bluetooth headset module: + / -
+J3,FRAME_LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),8-wire link to right temple
+D5,WHITE side,ana:LED_SideView_1.6x0.75mm_YLED0602,C46635136,YLED0602WSIDE,JLCPCB,side-emitting white LED at hinge end
+R11,100,Resistor_SMD:R_0402_1005Metric,C25076,,JLCPCB,
+J4,EXT_LED,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),optional external flashlight LED at the frame corner
+R12,68,Resistor_SMD:R_0402_1005Metric,C25131,,JLCPCB,

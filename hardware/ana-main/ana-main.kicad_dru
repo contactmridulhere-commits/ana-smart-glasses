@@ -1,0 +1,7 @@
+(version 1)
+# ANA temple boards - extra DRC rules (JLCPCB 4-layer 0.8 mm)
+(rule "Board edge (thin temple board)"
+  (constraint edge_clearance (min 0.25)))
+(rule "Via to pad on fine pitch"
+  (condition "A.Type == 'Via' && B.Type == 'Pad'")
+  (constraint hole_clearance (min 0.15)))

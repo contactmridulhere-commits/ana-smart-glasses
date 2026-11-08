@@ -1,0 +1,64 @@
+Ref,Value,Footprint,LCSC,MPN,Fitted by,Note
+U1,ESP32-U4WDH,ana:QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias_NoBottomPad,C20622217,ESP32-U4WDH,JLCPCB,"ESP32, 4 MB flash in package, BT Classic"
+C1,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,bulk at ESP32 supply entry
+C2,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C3,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+L1,2.0nH,Inductor_SMD:L_0402_1005Metric,C76769,MLG1005S2N0BT000,JLCPCB,VDD3P3 RF supply filter (Espressif ref.)
+C4,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,VDDA pin 1
+C5,100pF,Capacitor_SMD:C_0402_1005Metric,C1546,,JLCPCB,VDDA pins 43/46
+C6,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,VDDA pins 43/46
+C7,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,VDD3P3_RTC pin 19
+C8,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,VDD3P3_CPU pin 37
+C9,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,VDD_SDIO (in-package flash supply)
+C10,10nF,Capacitor_SMD:C_0402_1005Metric,C15195,,JLCPCB,"CAP1, 10% (required). The optional CAP2 RC (3.3nF || 20k) is omitted: Espressif allows this when deep sleep is not used"
+R2,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,CHIP_PU pull-up
+C12,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,CHIP_PU RC delay
+R3,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,GPIO0 boot strap pull-up
+Y1,40MHz 10ppm,Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm,C9010,X322540MPB4SI,JLCPCB,"40 MHz +-10 ppm, CL 15 pF"
+R4,0,Resistor_SMD:R_0402_1005Metric,C17168,,JLCPCB,series element on XTAL_P (tune after RF test)
+C13,22pF,Capacitor_SMD:C_0402_1005Metric,C1555,,JLCPCB,crystal load
+C14,22pF,Capacitor_SMD:C_0402_1005Metric,C1555,,JLCPCB,crystal load
+R5,470,Resistor_SMD:R_0402_1005Metric,C25117,,JLCPCB,U0TXD harmonic suppression (Espressif ref. 499R)
+R6,33,Resistor_SMD:R_0402_1005Metric,C25105,,JLCPCB,SPI clock series R
+R7,33,Resistor_SMD:R_0402_1005Metric,C25105,,JLCPCB,SPI data series R
+C15,1.5pF,Capacitor_SMD:C_0402_1005Metric,C1552,,JLCPCB,chip-side CLC match (tune)
+L2,2.0nH,Inductor_SMD:L_0402_1005Metric,C76769,MLG1005S2N0BT000,JLCPCB,chip-side CLC match (tune)
+C16,1.5pF,Capacitor_SMD:C_0402_1005Metric,C1552,,JLCPCB,chip-side CLC match (tune)
+C17,1.5pF,Capacitor_SMD:C_0402_1005Metric,C1552,,DNP (tuning option),"antenna-side match, not fitted"
+R8,0,Resistor_SMD:R_0402_1005Metric,C17168,,JLCPCB,antenna-side match series (0R or L)
+C18,1.5pF,Capacitor_SMD:C_0402_1005Metric,C1552,,DNP (tuning option),"antenna-side match, not fitted"
+AE1,ANT3216LL00R2400A,ana:ANT_Yageo_ANT3216LL00R2400A,C293767,ANT3216LL00R2400A,JLCPCB,2.4 GHz ceramic chip antenna at the ear-tip end
+J1,FRAME_LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),8-wire link to left temple: VSYS LED_K GND EN IO0 CHRG RX TX
+C19,10uF,Capacitor_SMD:C_0603_1608Metric,C380317,,JLCPCB,VSYS entry bulk
+U2,AP2112K-3.3,Package_TO_SOT_SMD:SOT-23-5,C51118,AP2112K-3.3TRG1,JLCPCB,"3.3 V 600 mA LDO, 250 mV dropout"
+C20,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C21,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,
+C22,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+R9,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,battery/VSYS divider
+R10,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,
+C23,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,ADC filter
+R11,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,charger status pull-up
+J2,DEBUG,ana:TestPads_1x04_P1.10mm,,,you (wire/pad),bring-up pads on the ear tip: 3V3 GND TX (after R5) RX; EN and IO0 are on J1
+U4,MAX30102,OptoDevice:Maxim_OLGA-14_3.3x5.6mm_P0.8mm,C6454833,MAX30102EFD+T,JLCPCB,"HR/SpO2, faces the skin (inner face)"
+C27,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,VLED+ bulk
+C28,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,VLED+
+C29,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,MAX30102 VDD
+C30,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+U5,XC6206P182MR,Package_TO_SOT_SMD:SOT-23,C21659,XC6206P182MR,JLCPCB,1.8 V for MAX30102 core
+C31,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+R17,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,I2C pull-up
+R18,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,I2C pull-up
+R19,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,INT pull-up
+U6,SHT40-AD1B,Sensor_Humidity:Sensirion_DFN-4_1.5x1.5mm_P0.8mm_SHT4x_NoCentralPad,C2909890,SHT40-AD1B-R2,JLCPCB,"temperature + humidity (replaces DHT11), I2C 0x44"
+C32,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+U7,TTP223-BA6,Package_TO_SOT_SMD:SOT-23-6,C42422127,TTP223-BA6-TD,JLCPCB,"toggle mode, power-up low (like V1)"
+C33,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C34,22pF,Capacitor_SMD:C_0402_1005Metric,C1555,,DNP (tuning option),"touch sensitivity trim, fit 0-50 pF if needed"
+E1,TOUCH,ana:TouchElectrode_4x10mm_Back,,,you (wire/pad),"electrode on outer copper, touch through the cover"
+Q2,AO3400A,Package_TO_SOT_SMD:SOT-23,C20917,AO3400A,JLCPCB,low-side LED switch
+R20,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,gate pull-down while 3V3 ramps
+D1,WHITE side,ana:LED_SideView_1.6x0.75mm_YLED0602,C46635136,YLED0602WSIDE,JLCPCB,side-emitting white LED at hinge end
+R21,100,Resistor_SMD:R_0402_1005Metric,C25076,,JLCPCB,LED current ~5-15 mA
+J3,EXT_LED,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),optional external flashlight LED at the frame corner (+ / -)
+R22,68,Resistor_SMD:R_0402_1005Metric,C25131,,JLCPCB,external LED current
+J4,OLED,ana:WirePads_1x07_P1.50mm,,,you (wire/pad),to 7-pin SPI SSD1306 OLED module: GND VCC D0 D1 RES DC CS
