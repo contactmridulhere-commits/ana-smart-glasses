@@ -9,3 +9,4 @@ _autosave-*
 # loose fabrication files (the zipped set in fab/<board>/ is what you upload)
 fab/*/gerbers/
 __pycache__/
+*.best

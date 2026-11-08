@@ -3,7 +3,7 @@
 	(generator "ana_gen")
 	(generator_version "1.0")
 	(layer "F.Cu")
-	(descr "7 solder pads 1.0x1.8 mm at 1.5 mm pitch for hand-soldered wires (no paste)")
+	(descr "7 plated wire holes (0.6 mm drill, 1.0x1.8 mm pads) at 1.5 mm pitch for hand-soldered wires")
 	(tags "")
 	(property "Reference" "REF**"
 		(at 0 -1.5 0)
@@ -51,11 +51,11 @@
 			)
 		)
 	)
-	(property "Description" "7 solder pads 1.0x1.8 mm at 1.5 mm pitch for hand-soldered wires (no paste)"
+	(property "Description" "7 plated wire holes (0.6 mm drill, 1.0x1.8 mm pads) at 1.5 mm pitch for hand-soldered wires"
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "0a08cf0f-91e5-5efd-80aa-b058bc279ce2")
+		(uuid "de66b885-c76c-5526-98f0-50332ea7588c")
 		(effects
 			(font
 				(size 0.6 0.6)
@@ -63,54 +63,61 @@
 			)
 		)
 	)
-	(attr smd exclude_from_pos_files exclude_from_bom)
-	(pad "1" smd roundrect
+	(attr through_hole exclude_from_pos_files exclude_from_bom)
+	(pad "1" thru_hole roundrect
 		(at -4.5 0)
 		(size 1 1.8)
-		(layers "F.Cu" "F.Mask")
+		(layers "*.Cu" "*.Mask")
 		(roundrect_rratio 0.15)
+		(drill 0.6)
 		(uuid "fd17b84f-a008-5a73-9736-897d2527d52d")
 	)
-	(pad "2" smd roundrect
+	(pad "2" thru_hole roundrect
 		(at -3 0)
 		(size 1 1.8)
-		(layers "F.Cu" "F.Mask")
+		(layers "*.Cu" "*.Mask")
 		(roundrect_rratio 0.15)
+		(drill 0.6)
 		(uuid "1dcadffb-f425-55d0-a884-d0ae3dd525ee")
 	)
-	(pad "3" smd roundrect
+	(pad "3" thru_hole roundrect
 		(at -1.5 0)
 		(size 1 1.8)
-		(layers "F.Cu" "F.Mask")
+		(layers "*.Cu" "*.Mask")
 		(roundrect_rratio 0.15)
+		(drill 0.6)
 		(uuid "8ffe1b32-d4c3-5404-871d-fe04b1e6ddbd")
 	)
-	(pad "4" smd roundrect
+	(pad "4" thru_hole roundrect
 		(at 0 0)
 		(size 1 1.8)
-		(layers "F.Cu" "F.Mask")
+		(layers "*.Cu" "*.Mask")
 		(roundrect_rratio 0.15)
+		(drill 0.6)
 		(uuid "48c71238-d71f-589e-a32a-a8e2d8ae1b0b")
 	)
-	(pad "5" smd roundrect
+	(pad "5" thru_hole roundrect
 		(at 1.5 0)
 		(size 1 1.8)
-		(layers "F.Cu" "F.Mask")
+		(layers "*.Cu" "*.Mask")
 		(roundrect_rratio 0.15)
+		(drill 0.6)
 		(uuid "b661d788-3fab-5134-8f7c-503d17903ea8")
 	)
-	(pad "6" smd roundrect
+	(pad "6" thru_hole roundrect
 		(at 3 0)
 		(size 1 1.8)
-		(layers "F.Cu" "F.Mask")
+		(layers "*.Cu" "*.Mask")
 		(roundrect_rratio 0.15)
+		(drill 0.6)
 		(uuid "0b5af544-ae15-5960-9a7d-d74ed47fb13a")
 	)
-	(pad "7" smd roundrect
+	(pad "7" thru_hole roundrect
 		(at 4.5 0)
 		(size 1 1.8)
-		(layers "F.Cu" "F.Mask")
+		(layers "*.Cu" "*.Mask")
 		(roundrect_rratio 0.15)
+		(drill 0.6)
 		(uuid "6bd3fe6e-cc0e-504f-a403-5bde8a1455ec")
 	)
 	(fp_circle

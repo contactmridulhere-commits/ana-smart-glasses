@@ -41,7 +41,8 @@ class Router:
         xs = self.x0 + np.arange(self.W) * RES
         self.X, self.Y = np.meshgrid(xs, ys)
         inside = shapely.contains_xy(board_poly, self.X, self.Y)
-        self.edge_dist = ndimage.distance_transform_edt(inside) * RES        # distance to outside
+        # distance to the board edge; the nearest outside cell centre can be up to one cell beyond the real edge
+        self.edge_dist = ndimage.distance_transform_edt(inside) * RES - RES
         self.owner = np.zeros((3, self.H, self.W), dtype=np.int32)          # net code per layer
         self.routed = np.zeros((3, self.H, self.W), dtype=np.int32)         # tracks/vias only
         self.novia = np.zeros((self.H, self.W), dtype=bool)                 # pad areas / keepouts
@@ -49,9 +50,14 @@ class Router:
         self.blocked_for = {}        # net name -> extra blocked mask (keepouts)
         self.vias = []               # (x, y, net)
         self.reservations = {}       # net -> list of reserved escape geometries
+        self.fixed = {}              # net -> escape stubs / plane vias that rip-up must keep
+        self.items = []              # routed copper, turned into KiCad objects by flush()
+        self.dir_cost = {}           # layer -> (horizontal, vertical, diagonal) step costs (default 1, 1, 1.414)
+        self.via_block = np.zeros((self.H, self.W), dtype=np.int16)        # same-net via spacing
         self.track_count = 0
         self.free_code = 100000
         self._load_copper()
+        self._load_rule_areas()
 
     # ------------------------------------------------------------------ geometry helpers
     def code(self, net):
@@ -122,6 +128,22 @@ class Router:
                         i0, i1, j0, j1, m = r
                         self.novia[i0:i1, j0:j1] |= m
 
+    def _load_rule_areas(self):
+        """Keep-out areas that come inside footprints (e.g. the SHT4x sensor window) block tracks/vias too."""
+        for fp in self.b.GetFootprints():
+            for z in fp.Zones():
+                if not z.GetIsRuleArea():
+                    continue
+                ol = z.Outline()
+                for k in range(ol.OutlineCount()):
+                    o = ol.Outline(k)
+                    poly = Polygon([local(o.CPoint(i)) for i in range(o.PointCount())])
+                    layers = [li for li, L in enumerate(LAYERS) if z.GetLayerSet().Contains(L)]
+                    if z.GetDoNotAllowTracks() and layers:
+                        self.block_area(poly.buffer(0.17), nets_allowed=(), novia=False, layers=tuple(layers))
+                    if z.GetDoNotAllowVias():
+                        self.no_vias(poly.buffer(VIA_D / 2 + 0.03))
+
     def _free(self):
         self.free_code += 1
         return self.free_code
@@ -178,18 +200,19 @@ class Router:
         if novia:
             self.novia |= mask
 
+    def no_vias(self, poly):
+        """forbid vias inside poly (tracks still allowed)."""
+        r = self._raster_mask(poly)
+        if r:
+            i0, i1, j0, j1, m = r
+            self.novia[i0:i1, j0:j1] |= m
+
     # ------------------------------------------------------------------ add copper
     def add_track(self, net, pts, layer_idx, w, keepoff=0.0):
+        """Copper is kept as data (self.items) until flush(), so routing rounds can be undone cheaply."""
         code = self.code(net)
-        for a, b in zip(pts[:-1], pts[1:]):
-            t = pcbnew.PCB_TRACK(self.b)
-            t.SetStart(pcbnew.VECTOR2I(mm(OX + a[0]), mm(OY + a[1])))
-            t.SetEnd(pcbnew.VECTOR2I(mm(OX + b[0]), mm(OY + b[1])))
-            t.SetWidth(mm(w))
-            t.SetLayer(LAYERS[layer_idx])
-            t.SetNet(self.bb.net(net))
-            self.b.Add(t)
-            self.track_count += 1
+        self.items.append(('T', net, [tuple(p) for p in pts], layer_idx, w))
+        self.track_count += max(len(pts) - 1, 0)
         g = LineString(pts).buffer(w / 2, cap_style='round') if len(pts) > 1 else Point(pts[0]).buffer(w / 2)
         r = self._raster(g, layer_idx, code, grow=keepoff)
         r2 = self._raster_mask(g)
@@ -197,26 +220,135 @@ class Router:
             i0, i1, j0, j1, m = r2
             self.routed[layer_idx, i0:i1, j0:j1][m] = code
 
+    def _via_block(self, x, y, delta):
+        # same-net via spacing (hole to hole 0.25 mm); other nets are kept away by the copper clearance
+        r = self._raster_mask(Point(x, y).buffer(VIA_DRILL / 2 + 0.25 + VIA_DRILL / 2))
+        if r:
+            i0, i1, j0, j1, m = r
+            self.via_block[i0:i1, j0:j1][m] += delta
+
     def add_via(self, net, x, y):
-        v = pcbnew.PCB_VIA(self.b)
-        v.SetPosition(pcbnew.VECTOR2I(mm(OX + x), mm(OY + y)))
-        v.SetWidth(mm(VIA_D))
-        v.SetDrill(mm(VIA_DRILL))
-        v.SetViaType(pcbnew.VIATYPE_THROUGH)
-        v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
-        v.SetNet(self.bb.net(net))
-        self.b.Add(v)
+        self.items.append(('V', net, x, y))
         self._raster(Point(x, y).buffer(VIA_D / 2), None, self.code(net))
         r2 = self._raster_mask(Point(x, y).buffer(VIA_D / 2))
         if r2:
             i0, i1, j0, j1, m = r2
             for L in range(3):
                 self.routed[L, i0:i1, j0:j1][m] = self.code(net)
-        r = self._raster_mask(Point(x, y).buffer(VIA_DRILL / 2 + 0.25 + VIA_DRILL / 2))
-        if r:
-            i0, i1, j0, j1, m = r
-            self.novia[i0:i1, j0:j1] |= m
+        self._via_block(x, y, 1)
         self.vias.append((x, y, net))
+
+    def flush(self):
+        """Create the KiCad tracks and vias for everything routed."""
+        for it in self.items:
+            if it[0] == 'T':
+                _, net, pts, layer_idx, w = it
+                for a, b in zip(pts[:-1], pts[1:]):
+                    t = pcbnew.PCB_TRACK(self.b)
+                    t.SetStart(pcbnew.VECTOR2I(mm(OX + a[0]), mm(OY + a[1])))
+                    t.SetEnd(pcbnew.VECTOR2I(mm(OX + b[0]), mm(OY + b[1])))
+                    t.SetWidth(mm(w))
+                    t.SetLayer(LAYERS[layer_idx])
+                    t.SetNet(self.bb.net(net))
+                    self.b.Add(t)
+            else:
+                _, net, x, y = it
+                v = pcbnew.PCB_VIA(self.b)
+                v.SetPosition(pcbnew.VECTOR2I(mm(OX + x), mm(OY + y)))
+                v.SetWidth(mm(VIA_D))
+                v.SetDrill(mm(VIA_DRILL))
+                v.SetViaType(pcbnew.VIATYPE_THROUGH)
+                v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+                v.SetNet(self.bb.net(net))
+                self.b.Add(v)
+        self.items = []
+
+    def prune(self, keep_nets=('GND',)):
+        """Delete copper that leads nowhere: vias that join fewer than two layers, and track segments with an end
+        that touches no other copper of their net (repeated until nothing changes).  Nets with planes/pours
+        (keep_nets) are left alone.  Returns (vias removed, segments removed)."""
+        tol = 0.005
+        items = []
+        for it in self.items:                               # one item per straight segment
+            if it[0] == 'T':
+                _, net, pts, L, w = it
+                for a, b in zip(pts[:-1], pts[1:]):
+                    if a != b:
+                        items.append(('T', net, [a, b], L, w))
+            else:
+                items.append(it)
+        pads = {}
+        for fp in self.b.GetFootprints():
+            for pad in fp.Pads():
+                net = pad.GetNetname().lstrip('/')
+                if not net or net in keep_nets:
+                    continue
+                for li, L in enumerate(LAYERS):
+                    if pad.GetLayerSet().Contains(L):
+                        g = self._pad_poly(pad, L)
+                        if g is not None and not g.is_empty:
+                            pads.setdefault((net, li), []).append(g)
+        nv = ns = 0
+        while True:
+            segs, vias = {}, {}
+            for k, it in enumerate(items):
+                if it[1] in keep_nets:
+                    continue
+                if it[0] == 'T':
+                    segs.setdefault((it[1], it[3]), []).append((k, LineString(it[2]), it[4]))
+                else:
+                    vias.setdefault(it[1], []).append((k, Point(it[2], it[3])))
+            drop = set()
+            for k, it in enumerate(items):
+                if it[1] in keep_nets:
+                    continue
+                net = it[1]
+                if it[0] == 'V':
+                    pt = Point(it[2], it[3])
+                    nl = 0
+                    for li in range(3):
+                        hit = any(g.distance(pt) <= tol for g in pads.get((net, li), []))
+                        hit = hit or any(ls.distance(pt) <= w / 2 + VIA_D / 2 + tol
+                                         for _, ls, w in segs.get((net, li), []))
+                        nl += hit
+                    if nl < 2:
+                        drop.add(k)
+                    continue
+                _, _, (a, b), li, w = it
+                for end in (a, b):
+                    pt = Point(end)
+                    ok = any(g.distance(pt) <= tol for g in pads.get((net, li), []))
+                    ok = ok or any(vp.distance(pt) <= VIA_D / 2 + tol for _, vp in vias.get(net, []))
+                    ok = ok or any(k2 != k and ls.distance(pt) <= w2 / 2 + tol
+                                   for k2, ls, w2 in segs.get((net, li), []))
+                    if not ok:
+                        drop.add(k)
+                        break
+            if not drop:
+                break
+            for k in drop:
+                if items[k][0] == 'V':
+                    nv += 1
+                    self.vias = [v for v in self.vias if (v[0], v[1], v[2]) != (items[k][2], items[k][3], items[k][1])]
+                else:
+                    ns += 1
+            items = [it for k, it in enumerate(items) if k not in drop]
+        self.items = items
+        return nv, ns
+
+    def snapshot(self):
+        return (list(self.items), self.owner.copy(), self.routed.copy(), self.via_block.copy(), list(self.vias),
+                self.track_count, {k: list(v) for k, v in self.fixed.items()})
+
+    def restore(self, snap):
+        items, owner, routed, vb, vias, tc, fixed = snap
+        self.items = list(items)
+        self.owner[...] = owner
+        self.routed[...] = routed
+        self.via_block[...] = vb
+        self.vias = list(vias)
+        self.track_count = tc
+        self.fixed = {k: list(v) for k, v in fixed.items()}
 
     # ------------------------------------------------------------------ masks
     def masks(self, net, w, clr, window, layers=(0, 1, 2)):
@@ -229,7 +361,8 @@ class Router:
         ok = []
         need = clr + w / 2 + EPS
         need_v = clr + VIA_D / 2 + EPS
-        via_ok = (~self.novia[i0:i1, j0:j1]) & (self.edge_dist[i0:i1, j0:j1] >= EDGE_CLR + VIA_D / 2 + 0.05)
+        via_ok = (~self.novia[i0:i1, j0:j1]) & (self.via_block[i0:i1, j0:j1] == 0) & \
+            (self.edge_dist[i0:i1, j0:j1] >= EDGE_CLR + VIA_D / 2 + 0.05)
         extra = [np.zeros((i1 - i0, j1 - j0), dtype=bool) for _ in range(3)]
         for mask, allowed, lys in self.blocked_for.get('*', []):
             if net not in allowed:
@@ -303,7 +436,10 @@ class Router:
                 break
             ci, cj = divmod(k, wd)
             row = okb[L]
+            dc = self.dir_cost.get(L)
             for di, dj, cst in DIRS:
+                if dc is not None:
+                    cst = dc[0] if di == 0 else dc[1] if dj == 0 else dc[2]
                 ni, nj = ci + di, cj + dj
                 if ni < 0 or nj < 0 or ni >= h or nj >= wd:
                     continue
@@ -325,6 +461,7 @@ class Router:
                         prev[(L2, k)] = (L, k)
                         heapq.heappush(heap, (ng + hfun(k), ng, L2, k))
         if not found:
+            self.last_fail = (win, wd, list(g.keys()), dst_cells, src_cells)
             return None
         path = []
         st = found
@@ -388,8 +525,71 @@ class Router:
                         out += [(li, int(i + i0), int(j + j0)) for i, j in zip(ii, jj)]
         return out
 
+    def islands(self, net, pc):
+        """Connected copper of `net` (tracks, vias and the pads in pc = {pin: cells}).
+        Layers are labelled separately and only joined at this net's vias and at plated through-hole pads,
+        so a track crossing another one of the same net on a different layer does not count as a joint.
+        Returns ({pin: island id}, {island id: [(L, i, j), ...]})."""
+        code = self.code(net)
+        allc = [c for cs in pc.values() for c in cs]
+        rc = [np.nonzero(self.routed[L] == code) for L in range(3)]
+        ii = np.concatenate([r[0] for r in rc] + [np.array([c[1] for c in allc], dtype=np.int64)])
+        jj = np.concatenate([r[1] for r in rc] + [np.array([c[2] for c in allc], dtype=np.int64)])
+        if not len(ii):
+            return {}, {}
+        i0, i1 = max(int(ii.min()) - 2, 0), min(int(ii.max()) + 3, self.H)
+        j0, j1 = max(int(jj.min()) - 2, 0), min(int(jj.max()) + 3, self.W)
+        labs, off = [], 0
+        for L in range(3):
+            m = self.routed[L, i0:i1, j0:j1] == code
+            for c in allc:
+                if c[0] == L:
+                    m[c[1] - i0, c[2] - j0] = True
+            lab, n = ndimage.label(m, structure=np.ones((3, 3), dtype=int))
+            lab[lab > 0] += off
+            labs.append(lab)
+            off += n
+        parent = list(range(off + 1))
+
+        def find(a):
+            while parent[a] != a:
+                parent[a] = parent[parent[a]]
+                a = parent[a]
+            return a
+
+        def union(ls):
+            ls = [find(int(x)) for x in ls if x]
+            for x in ls[1:]:
+                parent[x] = ls[0]
+        for (x, y, n) in self.vias:
+            if n != net:
+                continue
+            i, j = self.cell(x, y)
+            if i0 <= i < i1 and j0 <= j < j1:
+                union([labs[L][i - i0, j - j0] for L in range(3)])
+        for p, cs in pc.items():
+            first = {}
+            for c in cs:
+                first.setdefault(c[0], c)
+            if len(first) > 1:                               # through-hole pad: joins its layers
+                union([labs[L][c[1] - i0, c[2] - j0] for L, c in first.items()])
+        comp_of = {}
+        for p, cs in pc.items():
+            if cs:
+                c = cs[0]
+                comp_of[p] = find(int(labs[c[0]][c[1] - i0, c[2] - j0]))
+        cells = {}
+        for L in range(3):
+            li, lj = np.nonzero(labs[L])
+            roots = [find(int(v)) for v in labs[L][li, lj]]
+            for r, a, b in zip(roots, li, lj):
+                cells.setdefault(r, []).append((L, int(a) + i0, int(b) + j0))
+        return comp_of, cells
+
     def route_net(self, net, pins, w, clr, layers=(0, 1, 2), allow_via=True, widths=None, keepoff=0.0):
-        """pins: list of (ref, pad). Grow a tree; returns list of failed pins."""
+        """pins: list of (ref, pad). Grow a tree; returns list of failed pins.
+        Copper placed earlier (escape stubs, fan-out vias) only counts as part of the tree once it is really
+        joined to it; a pin that already has its own stub is reached through that stub's copper."""
         widths = widths or [w]
         pend = list(dict.fromkeys(pins))
         pc = {p: self.pad_cells(*p) for p in pend}
@@ -403,7 +603,14 @@ class Router:
         tree = [pend.pop(0)]
         failed = []
         while pend:
-            tc = self.net_cells(net) + [c for p in tree for c in pc[p]]
+            comp_of, ccells = self.islands(net, {p: pc[p] for p in tree + pend})
+            tcomp = {comp_of[p] for p in tree if p in comp_of}
+            for p in [q for q in pend if comp_of.get(q) in tcomp]:
+                pend.remove(p)                                 # already joined by earlier copper
+                tree.append(p)
+            if not pend:
+                break
+            tc = [c for k in tcomp for c in ccells.get(k, [])]
             tarr = np.array([[c[1], c[2]] for c in tc])
 
             def dist(p):
@@ -413,10 +620,11 @@ class Router:
                                                              tarr[::10, None, 1] - pa[None, :, 1]))
             pend.sort(key=dist)
             p = pend.pop(0)
+            dst = ccells.get(comp_of.get(p), pc[p])            # the pin plus any stub/via already on it
             done = False
             for ww in widths:
                 for margin in (2.5, 6.0, 30.0):
-                    path = self.route_pair(net, tc, pc[p], ww, clr, layers, margin=margin, allow_via=allow_via)
+                    path = self.route_pair(net, tc, dst, ww, clr, layers, margin=margin, allow_via=allow_via)
                     if path:
                         self.commit(net, path, ww, keepoff)
                         done = True
@@ -429,13 +637,95 @@ class Router:
                 failed.append(p)
         return failed
 
+    def dump_fail(self, path, title=''):
+        """Debug picture of the last failed search: explored cells per layer (F red, In2 green, B blue)."""
+        from PIL import Image, ImageDraw
+        if not getattr(self, 'last_fail', None):
+            return
+        (i0, i1, j0, j1), wd, keys, dst, src = self.last_fail
+        h = i1 - i0
+        img = Image.new('RGB', (wd, h * 3 + 20), (255, 255, 255))
+        px = img.load()
+        for L in range(3):
+            own = self.owner[L, i0:i1, j0:j1]
+            ii, jj = np.nonzero(own != 0)
+            for a, b in zip(ii, jj):
+                px[int(b), int(a) + L * h] = (200, 200, 200)
+        col = [(230, 60, 60), (40, 170, 60), (60, 90, 230)]
+        for L, k in keys:
+            a, b = divmod(k, wd)
+            px[b, a + L * h] = col[L]
+        for (L, i, j) in dst:
+            if i0 <= i < i1 and j0 <= j < j1:
+                px[j - j0, i - i0 + L * h] = (250, 200, 0)
+        ImageDraw.Draw(img).text((2, 3 * h + 4), title, fill=(0, 0, 0))
+        img.save(path)
+
+    def stub(self, net, pts, w=0.15, clr=0.1):
+        """Place an explicit F.Cu polyline from a pad (first point inside it) ending in a via at the last point,
+        after checking every cell along it and the via against the clearance masks."""
+        xs = [p[0] for p in pts]; ys = [p[1] for p in pts]
+        i0, j0 = self.cell(min(xs), min(ys)); i1, j1 = self.cell(max(xs), max(ys))
+        m = int(1.0 / RES)
+        win = (max(i0 - m, 0), min(i1 + m + 1, self.H), max(j0 - m, 0), min(j1 + m + 1, self.W))
+        ok, via_ok = self.masks(net, w, clr, win)
+        code = self.code(net)
+        for a, b in zip(pts[:-1], pts[1:]):
+            n = int(max(abs(b[0] - a[0]), abs(b[1] - a[1])) / (RES / 2)) + 1
+            for t in range(n + 1):
+                x = a[0] + (b[0] - a[0]) * t / n; y = a[1] + (b[1] - a[1]) * t / n
+                i, j = self.cell(x, y)
+                if self.owner[0, i, j] == code:      # inside own pad / own copper
+                    continue
+                if not ok[0][i - win[0], j - win[2]]:
+                    return False
+        vi, vj = self.cell(*pts[-1])
+        if not via_ok[vi - win[0], vj - win[2]]:
+            return False
+        self.add_track(net, pts, 0, w)
+        self.add_via(net, *pts[-1])
+        self.fixed.setdefault(net, []).append((pts, w))
+        return True
+
+    def pad_connected(self, net, ref, num):
+        """True if routed copper of `net` already touches this pad."""
+        code = self.code(net)
+        for (L, i, j) in self.pad_cells(ref, num):
+            for di in (-1, 0, 1):
+                for dj in (-1, 0, 1):
+                    ii, jj = i + di, j + dj
+                    if 0 <= ii < self.H and 0 <= jj < self.W and self.routed[L, ii, jj] == code:
+                        return True
+        return False
+
+    def connect_pin(self, net, ref, num, w=0.2, clr=0.1, layers=(0, 2), radius=6.0):
+        """Connect one pad to the nearest already-routed copper (tracks/vias) of its own net."""
+        src = self.pad_cells(ref, num)
+        if not src:
+            return False
+        ci = np.mean([c[1] for c in src]); cj = np.mean([c[2] for c in src])
+        own = set((c[1], c[2]) for c in src)
+        for rad in (radius, radius * 2.5):
+            r = int(rad / RES)
+            dst = [c for c in self.net_cells(net)
+                   if abs(c[1] - ci) <= r and abs(c[2] - cj) <= r and (c[1], c[2]) not in own]
+            if not dst:
+                continue
+            for ww in (w, 0.15):
+                path = self.route_pair(net, src, dst, ww, clr, layers, margin=1.5)
+                if path:
+                    self.commit(net, path, ww)
+                    return True
+        return False
+
     # ------------------------------------------------------------------ rip-up
     def ripup(self, net):
-        """Remove all tracks and vias of `net` from the board and the grid (pads stay)."""
+        """Remove the tracks and vias of `net` from the grid (pads, reservations and fixed escapes stay)."""
         code = self.code(net)
-        for t in list(self.b.GetTracks()):
-            if t.GetNetname().lstrip('/') == net:
-                self.b.Remove(t)
+        for it in self.items:
+            if it[0] == 'V' and it[1] == net:
+                self._via_block(it[2], it[3], -1)
+        self.items = [it for it in self.items if it[1] != net]
         self.owner[self.owner == code] = 0
         self.routed[self.routed == code] = 0
         self.vias = [v for v in self.vias if v[2] != net]
@@ -451,6 +741,9 @@ class Router:
                             self._raster(g, li, code)
         for g in self.reservations.get(net, []):
             self._raster(g, 0, code, grow=0.0001)
+        for pts, w in self.fixed.get(net, []):              # escape stubs and plane vias stay
+            self.add_track(net, pts, 0, w)
+            self.add_via(net, *pts[-1])
 
     def nets_near(self, cells, radius=1.5, exclude=()):
         """Routed nets whose tracks/vias come within `radius` mm of any of the given cells."""
@@ -465,13 +758,15 @@ class Router:
         return [inv[c] for c in codes if c in inv and inv[c] not in exclude and inv[c] != 'GND']
 
     # ------------------------------------------------------------------ GND fan-out and stitching
-    def fanout(self, net, ref, num, w=0.25, clr=0.1, max_d=1.6, prefer=None, tol=None):
+    def fanout(self, net, ref, num, w=0.25, clr=0.1, max_d=1.6, prefer=None, tol=None, fixed=True):
         cells = self.pad_cells(ref, num)
         f_cells = [c for c in cells if c[0] == 0]
         if not f_cells:
             return False
         ci = np.mean([c[1] for c in f_cells]); cj = np.mean([c[2] for c in f_cells])
         pad_set = set((c[1], c[2]) for c in f_cells)
+        pads = [p for p in self.bb.fps[ref].Pads() if p.GetNumber() == num and p.IsOnLayer(pcbnew.F_Cu)]
+        pad_g = shapely.union_all([self._pad_poly(p, pcbnew.F_Cu) for p in pads])
         m = int((max_d + 0.5) / RES)
         win = (max(int(ci) - m, 0), min(int(ci) + m, self.H), max(int(cj) - m, 0), min(int(cj) + m, self.W))
         ok, via_ok = self.masks(net, w, clr, win)
@@ -495,6 +790,8 @@ class Router:
         for d, i, j in cands[:400]:
             # straight path from via to nearest pad cell on F.Cu must be clear
             gi, gj = i + i0, j + j0
+            if pad_g.distance(Point(*self.xy(gi, gj))) < VIA_D / 2 + 0.05:
+                continue
             best = min(pad_set, key=lambda c: (c[0] - gi) ** 2 + (c[1] - gj) ** 2)
             n = max(abs(best[0] - gi), abs(best[1] - gj))
             good = True
@@ -511,6 +808,8 @@ class Router:
             bx, by = self.xy(*best)
             self.add_track(net, [(bx, by), (x, y)], 0, w)
             self.add_via(net, x, y)
+            if fixed:
+                self.fixed.setdefault(net, []).append(([(bx, by), (x, y)], w))
             return True
         return False
 

@@ -72,8 +72,32 @@ SMD = ('F.Cu', 'F.Paste', 'F.Mask')
 SMD_NOPASTE = ('F.Cu', 'F.Mask')
 
 
+KICAD_FP = '/usr/share/kicad/footprints'
+ESP32_FP = 'QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias_NoBottomPad'
+
+
+def esp32_footprint():
+    """KiCad's QFN-48 (5x5, 0.35 mm) thermal-via footprint without its bottom-side copper pad: the 16 vias still
+    tie the exposed pad to the In1 GND plane, and tracks can pass under the chip on B.Cu between them."""
+    src = os.path.join(KICAD_FP, 'Package_DFN_QFN.pretty', 'QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias.kicad_mod')
+    dst = os.path.join(LIB, ESP32_FP + '.kicad_mod')
+    if not os.path.exists(src):
+        return                                   # keep the committed copy
+    txt = open(src, encoding='utf-8').read()
+    blk = ('\t(pad "49" smd rect\n\t\t(at 0 0)\n\t\t(size 3.7 3.7)\n\t\t(property pad_prop_heatsink)\n'
+           '\t\t(layers "B.Cu")\n\t\t(zone_connect 2)\n\t)\n')
+    assert blk in txt, 'unexpected library footprint layout'
+    txt = txt.replace(blk, '')
+    txt = txt.replace('(footprint "QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias"', '(footprint "%s"' % ESP32_FP)
+    txt = txt.replace('(descr "QFN, 48 Pin', '(descr "No bottom-side pad (tracks may pass on B.Cu between the '
+                      'thermal vias). QFN, 48 Pin', 1)
+    with open(dst, 'w', encoding='utf-8') as f:
+        f.write(txt)
+
+
 def build():
     os.makedirs(LIB, exist_ok=True)
+    esp32_footprint()
     # --- Yageo ANT3216LL00R2400A chip antenna (feed S1 = pad 1, open end S2 = pad 2 + 2.5 mm stub per Yageo eval board)
     items = [pad('1', 'smd', 'rect', -1.45, 0, 0.7, 1.7, SMD), pad('2', 'smd', 'rect', 1.45, 0, 0.7, 1.7, SMD),
              pad('2', 'smd', 'rect', 3.05, 0, 2.5, 1.0, ('F.Cu',)),
@@ -95,25 +119,27 @@ def build():
         items = []
         x0 = -(n - 1) * pitch / 2
         for i in range(n):
-            items.append(pad(str(i + 1), 'smd', 'roundrect', x0 + i * pitch, 0, 1.0, 1.8, SMD_NOPASTE, rr=0.15))
+            items.append(pad(str(i + 1), 'thru_hole', 'roundrect', x0 + i * pitch, 0, 1.0, 1.8, ('*.Cu', '*.Mask'),
+                             rr=0.15, extra=[[Sym('drill'), 0.6]]))
         items.append(circle(x0, -1.12, 0.12, 'F.SilkS', 0.08))
         items.append(rect(x0 - 0.75, -1.3, -x0 + 0.75, 1.15, 'F.CrtYd', 0.05))
         items.append(rect(x0 - 0.5, -0.9, -x0 + 0.5, 0.9, 'F.Fab', 0.08))
-        footprint('WirePads_1x%02d_P1.50mm' % n, '%d solder pads 1.0x1.8 mm at 1.5 mm pitch for hand-soldered '
-                  'wires (no paste)' % n, items, attr=('smd', 'exclude_from_pos_files', 'exclude_from_bom'))
+        footprint('WirePads_1x%02d_P1.50mm' % n, '%d plated wire holes (0.6 mm drill, 1.0x1.8 mm pads) at 1.5 mm '
+                  'pitch for hand-soldered wires' % n, items, attr=('through_hole', 'exclude_from_pos_files',
+                                                                    'exclude_from_bom'))
     # --- debug test pads: 6 round pads in a row
     items = []
-    pitch = 1.3
+    pitch = 1.1
     for i in range(6):
-        items.append(pad(str(i + 1), 'smd', 'circle', (i - 2.5) * pitch, 0, 0.9, 0.9, SMD_NOPASTE))
-    items.append(circle(-2.5 * pitch - 0.8, -0.55, 0.12, 'F.SilkS', 0.1))
-    items.append(rect(-2.5 * pitch - 0.65, -0.65, 2.5 * pitch + 0.65, 0.65, 'F.CrtYd', 0.05))
-    footprint('TestPads_1x06_P1.30mm', 'Bring-up pads 3V3 GND TX RX EN IO0 (pogo or wire)', items,
+        items.append(pad(str(i + 1), 'smd', 'circle', (i - 2.5) * pitch, 0, 0.8, 0.8, SMD_NOPASTE))
+    items.append(circle(-2.5 * pitch, -0.62, 0.1, 'F.SilkS', 0.08))
+    items.append(rect(-2.5 * pitch - 0.6, -0.8, 2.5 * pitch + 0.6, 0.6, 'F.CrtYd', 0.05))
+    footprint('TestPads_1x06_P1.10mm', 'Bring-up pads 3V3 GND TX RX EN IO0 (pogo or wire)', items,
               attr=('smd', 'exclude_from_pos_files', 'exclude_from_bom'))
     # --- touch electrode (placed on the BACK side so the copper is on the outer face)
-    items = [pad('1', 'smd', 'roundrect', 0, 0, 12.0, 5.0, ('F.Cu',), rr=0.2),
-             rect(-6.25, -2.75, 6.25, 2.75, 'F.CrtYd', 0.05), text('TOUCH', 0, 0, 'F.Fab', 0.8)]
-    footprint('TouchElectrode_5x12mm_Back', 'Capacitive touch electrode 12x5 mm, copper only, covered by solder '
+    items = [pad('1', 'smd', 'roundrect', 0, 0, 10.0, 4.0, ('F.Cu',), rr=0.25),
+             rect(-5.2, -2.2, 5.2, 2.2, 'F.CrtYd', 0.05), text('TOUCH', 0, 0, 'F.Fab', 0.8)]
+    footprint('TouchElectrode_4x10mm_Back', 'Capacitive touch electrode 10x4 mm, copper only, covered by solder '
               'mask. Place on the back (outer) side.', items, attr=('smd', 'exclude_from_pos_files', 'exclude_from_bom'))
     # --- battery tab pads
     items = [pad('1', 'smd', 'roundrect', -1.75, 0, 2.0, 2.6, SMD_NOPASTE, rr=0.15),

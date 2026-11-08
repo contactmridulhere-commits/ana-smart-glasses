@@ -8,7 +8,7 @@ soldered directly to the board: the ESP32 chip itself, the sensor chips, the cha
 |---|---|---|
 | Job | ESP32 + sensors + display link | Battery, charging, power switching |
 | Main parts | ESP32-U4WDH (5×5 mm, 4 MB flash in package), 2.4 GHz chip antenna, CP2102N USB-serial + auto-reset, MAX30102, SHT40, TTP223 touch, 3.3 V and 1.8 V LDOs, side LED | USB-C (bottom edge), TP4056 charger, DW01A + FS8205A cell protection, USB/battery power path, POWER and BT slide switches, BT-headset power pads, side LED, battery pads |
-| Parts | 75: 67 assembled by JLCPCB, 3 tuning parts not fitted, 5 wire/touch pads | 38: 34 assembled by JLCPCB, 4 wire/battery pads |
+| Parts | 73: 65 assembled by JLCPCB, 3 tuning parts not fitted, 5 wire/touch/test pads | 38: 34 assembled by JLCPCB, 4 wire/battery pads |
 
 ![Right temple, top](docs/ana-main-render-top.png)
 ![Left temple, top](docs/ana-power-render-top.png)
@@ -34,7 +34,7 @@ is a dimensioned drawing with the positions of every window and slot your cover 
 Cover openings needed (x measured from the hinge end along the top edge):
 
 - Right temple, head side: MAX30102 window at x ≈ 50–56 mm (must touch skin); SHT40 vent at x ≈ 41–44 mm top edge.
-  Touch area on the outer face at x ≈ 25.5–37.5 mm (touch through ≤ 2 mm of plastic).
+  Touch area on the outer face at x ≈ 26.5–36.5 mm (10 × 4 mm electrode; touch through ≤ 2 mm of plastic).
   Side LED and the two wire bundles leave at the hinge end.
 - Left temple: USB-C opening in the bottom edge at x ≈ 16–25 mm; POWER switch lever (top edge, x ≈ 54 mm);
   BT switch lever (top edge, x ≈ 79.5 mm); charge LEDs red/green at x ≈ 40–43 mm.
@@ -64,7 +64,7 @@ Two thin wire bundles run over the front frame, as in V1:
 |---|---|---|---|---|---|---|---|---|
 | Signal | VSYS | GND | USB D+ | USB D− | GND | VBUS | CHRG | LED_K |
 
-Use flexible wire (e.g. 32–34 AWG silicone, or 0.5 mm FFC); twist or run D+ and D− side by side.
+All wire pads are plated holes (0.6 mm drill, 1.5 mm pitch): push the stripped wire through and solder. Use flexible wire (e.g. 32–34 AWG silicone); run D+ and D− side by side.
 
 **OLED module, 7 wires** (pads J4 on the right temple, same order as the module's header):
 GND, VCC (3.3 V), D0/CLK, D1/MOSI, RES, DC, CS.
@@ -85,6 +85,7 @@ temple a row of bring-up pads `3V3 GND TX RX EN IO0 IO4`.
 | POWER and BT slide switches (switching MOSFET gates) | The tiny switches only carry gate current; the FETs carry the load. The BT headset is fed from the protected cell directly, never from 5 V. |
 | Battery %, USB and charging status to the ESP32 | Shown in the top corner of the HUD. The charge-status line has a diode so nothing back-powers the ESP32 when it is off. |
 | Touch also read by the ESP32 (GPIO14) | TTP223 is still in toggle mode and switches both temples' LEDs through one MOSFET, like V1; the firmware shows `*` while the light is on. |
+| CAP2 RC (3.3 nF ∥ 20 kΩ) left out, only the 10 nF on CAP1 fitted | Espressif marks the RC as optional when deep sleep is not used (it only shortens the deep-sleep transition). Frees space beside the chip. Add it back if you add deep sleep. |
 | MAX30102 on the inner face, 1.8 V core LDO on board | Hands-free reading at the temple; I²C is 6 V tolerant so it runs straight from the 3.3 V pull-ups. |
 
 ## Checks run on this design

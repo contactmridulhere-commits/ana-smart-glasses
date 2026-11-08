@@ -79,7 +79,7 @@ def main_board():
     esp = {
         '1': '3V3', '43': '3V3', '46': '3V3', '19': '3V3', '37': '3V3',
         '3': 'VDD3P3', '4': 'VDD3P3', '26': 'VDD_SDIO',
-        '2': 'LNA_IN', '45': 'XTAL_P', '44': 'XTAL_N', '48': 'CAP1', '47': 'CAP2', '9': 'EN', '49': 'GND',
+        '2': 'LNA_IN', '45': 'XTAL_P', '44': 'XTAL_N', '48': 'CAP1', '47': None, '9': 'EN', '49': 'GND',
         '23': 'IO0', '41': 'U0TXD', '40': 'U0RXD',
         '15': 'OLED_DC',        # GPIO26  (hinge-facing side)
         '16': 'OLED_RST',       # GPIO27
@@ -97,7 +97,7 @@ def main_board():
         '22': None, '38': None, '25': None, '27': None, '28': None, '29': None, '30': None, '31': None,
         '32': None, '33': None,
     }
-    c.append(Comp('U1', 'ana:ESP32-U4WDH', 'ESP32-U4WDH', 'Package_DFN_QFN:QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias',
+    c.append(Comp('U1', 'ana:ESP32-U4WDH', 'ESP32-U4WDH', 'ana:QFN-48-1EP_5x5mm_P0.35mm_EP3.7x3.7mm_ThermalVias_NoBottomPad',
                   esp, 'C20622217', 'ESP32-U4WDH', block=B, desc='ESP32, 4 MB flash in package, BT Classic'))
     c += [
         C('C1', '10uF', '3V3', 'GND', B, 'bulk at ESP32 supply entry'),
@@ -107,8 +107,8 @@ def main_board():
         C('C5', '100pF', '3V3', 'GND', B, 'VDDA pins 43/46'), C('C6', '1uF', '3V3', 'GND', B, 'VDDA pins 43/46'),
         C('C7', '100nF', '3V3', 'GND', B, 'VDD3P3_RTC pin 19'), C('C8', '100nF', '3V3', 'GND', B, 'VDD3P3_CPU pin 37'),
         C('C9', '1uF', 'VDD_SDIO', 'GND', B, 'VDD_SDIO (in-package flash supply)'),
-        C('C10', '10nF', 'CAP1', 'GND', B, 'CAP1, 10%'), C('C11', '3.3nF', 'CAP2', 'CAP1', B, 'CAP2-CAP1, 10%'),
-        R('R1', '20k', 'CAP2', 'CAP1', B),
+        C('C10', '10nF', 'CAP1', 'GND', B, 'CAP1, 10% (required). The optional CAP2 RC (3.3nF || 20k) is omitted: '
+          'Espressif allows this when deep sleep is not used'),
         R('R2', '10k', '3V3', 'EN', B, 'CHIP_PU pull-up'), C('C12', '1uF', 'EN', 'GND', B, 'CHIP_PU RC delay'),
         R('R3', '10k', '3V3', 'IO0', B, 'GPIO0 boot strap pull-up'),
         Comp('Y1', 'Device:Crystal_GND24', '40MHz 10ppm', 'Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm',
@@ -162,9 +162,9 @@ def main_board():
              'C83572', 'MMDT3904-7-F', block=B, desc='ESP32 auto-reset (DTR/RTS)',
              unit_pins={1: ['1', '2', '6'], 2: ['3', '4', '5']}),
         R('R15', '10k', 'DTR_N', 'Q1_B1', B), R('R16', '10k', 'RTS_N', 'Q1_B2', B),
-        Comp('J2', 'ana:WirePads_6', 'DEBUG', 'ana:TestPads_1x06_P1.30mm',
-             {'1': '3V3', '2': 'GND', '3': 'U0TXD', '4': 'U0RXD', '5': 'EN', '6': 'IO0'},
-             block=B, desc='bring-up pads: 3V3 GND TX RX EN IO0'),
+        Comp('J2', 'ana:WirePads_6', 'DEBUG', 'ana:TestPads_1x06_P1.10mm',
+             {'1': '3V3', '2': 'GND', '3': 'U0TXD_R', '4': 'U0RXD', '5': 'EN', '6': 'IO0'},
+             block=B, desc='bring-up pads next to the CP2102N: 3V3 GND TX (after R5) RX EN IO0'),
     ]
     B = 'Sensors'
     c += [
@@ -191,7 +191,7 @@ def main_board():
              'C42422127', 'TTP223-BA6-TD', block=B, desc='toggle mode, power-up low (like V1)'),
         C('C33', '100nF', '3V3', 'GND', B),
         C('C34', '22pF', 'TOUCH_PAD', 'GND', B, 'touch sensitivity trim, fit 0-50 pF if needed', dnp=True),
-        Comp('E1', 'ana:TouchElectrode', 'TOUCH', 'ana:TouchElectrode_5x12mm_Back', {'1': 'TOUCH_PAD'}, block=B,
+        Comp('E1', 'ana:TouchElectrode', 'TOUCH', 'ana:TouchElectrode_4x10mm_Back', {'1': 'TOUCH_PAD'}, block=B,
              desc='electrode on outer copper, touch through the cover'),
         Comp('Q2', 'Transistor_FET:AO3400A', 'AO3400A', 'Package_TO_SOT_SMD:SOT-23',
              {'1': 'TOUCH', '2': 'GND', '3': 'LED_K'}, 'C20917', 'AO3400A', block=B, desc='low-side LED switch'),

@@ -174,17 +174,22 @@ class Builder:
                     cands.append((d, ax + dx, ay + dy))
         cands.sort()
         fp = self.place(ref, 0.0, 0.0, rots[0])
-        shapes = {}
-        for rot in rots:                      # courtyard relative to the footprint origin, per rotation
+        shapes, padsh = {}, {}
+        for rot in rots:                      # courtyard and copper relative to the footprint origin, per rotation
             fp.SetPosition(P(0, 0))
             fp.SetOrientationDegrees(rot)
             shapes[rot] = self.courtyard(fp)
+            bbs = [p.GetBoundingBox() for p in fp.Pads()]
+            padsh[rot] = box(min(pcbnew.ToMM(b.GetX()) for b in bbs) - OX, min(pcbnew.ToMM(b.GetY()) for b in bbs) - OY,
+                             max(pcbnew.ToMM(b.GetRight()) for b in bbs) - OX,
+                             max(pcbnew.ToMM(b.GetBottom()) for b in bbs) - OY)
+        copper_ok = self.t.poly.buffer(-0.3)  # pads keep 0.3 mm from the edge (JLC copper-to-edge 0.25 mm)
         from shapely.strtree import STRtree
         tree = STRtree(others) if others else None
         for d, x, y in cands:
             for rot in rots:
                 cy = affinity.translate(shapes[rot], x, y)
-                if not inner.contains(cy):
+                if not inner.contains(cy) or not copper_ok.contains(affinity.translate(padsh[rot], x, y)):
                     continue
                 if tree is not None and len(tree.query(cy.buffer(spacing), predicate='intersects')):
                     continue

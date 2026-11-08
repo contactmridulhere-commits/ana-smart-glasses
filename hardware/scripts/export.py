@@ -134,7 +134,7 @@ def outline_svg():
     tx, ty = P(*t.tip(t.Lt - 1, t.h3 / 2))
     el.append('<text x="%.1f" y="%.1f" fill="#c62828">%.1f</text>' % (tx + 14, ty + 18, t.h3))
     notes = ['Board thickness 0.8 mm; tallest part 1.55 mm (MAX30102) on the main board, 3.3 mm (USB-C) on the power board.',
-             'Main (right) board: parts face the head; MAX30102 window at x = 50-56 mm; touch electrode on outer face x = 25.5-37.5 mm;',
+             'Main (right) board: parts face the head; MAX30102 window at x = 50-56 mm; touch electrode (10 x 4 mm) on the outer face at x = 26.5-36.5 mm;',
              '   SHT40 vent at x = 41-44 mm top edge; antenna zone = last 9.5 mm of the tip (keep metal/wires away).',
              'Power (left) board: USB-C opening on the bottom edge at x = 16-25 mm; slide switches on the top edge at x = 54 mm (POWER)',
              '   and x = 79.5 mm (BT); charge LEDs at x = 40-43 mm; LiPo (~3.5 x 7 x 30 mm) sits in the ear tip, pads at x = 97-101 mm.',

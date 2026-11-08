@@ -18,20 +18,29 @@ def layout_main(bb):
     bb.place('J4', 7.1, 1.25, 0)                       # OLED wire pads (top row)
     bb.place('J1', 7.85, 7.85, 0)                      # frame-link wire pads (bottom row)
     bb.place('J3', 5.2, 4.7, 90)                       # external LED pads
-    bb.place('J2', 16.8, 4.7, 0)                       # bring-up test pads
+    # USB-serial bridge next to the frame-link pads: USB pins (left side) face the hinge pads, UART/DTR/RTS
+    # (top side) face the top edge, where they turn towards the ESP32 together with the bring-up pads.
+    bb.place('U3', 19.5, 5.0, 0)
+    bb.place('J2', 26.6, 0.85, 0)                      # bring-up pads (top edge, next to the CP2102N)
     bb.place('E1', 31.5, 4.6, 0, back=True)            # touch electrode on the outer face
     bb.place('U7', 28.0, 4.6, 0)                       # TTP223
     bb.place('Q2', 34.5, 4.6, 0)                       # LED switch
-    # SHT40 on a slotted island at the top edge (thermal isolation from the board)
-    bb.cutout([(39.6, 2.6), (45.4, 2.6), (45.4, 0.7), (46.2, 0.7), (46.2, 3.4), (39.6, 3.4)])
+    # SHT40 at the top edge, far from the regulator and the ESP32; no copper pour around it (see build.py)
     bb.place('U6', 42.4, 1.3, 0)
     bb.place('U4', 53.0, 4.3, 90)                      # MAX30102, optical window faces the head
-    bb.place('U2', 64.0, 4.2, 0)                       # 3.3 V LDO
-    bb.place('U3', 73.5, 4.0, 0)                       # CP2102N (0.5 mm pitch -> on grid)
+    bb.place('U2', 63.0, 6.35, 0)                      # 3.3 V LDO on the bottom edge (centre lane stays free)
     # ESP32: pads are on odd multiples of 0.175 mm, so the centre sits on an odd multiple of 0.025 mm
     # to put every pad centre exactly on the 0.05 mm routing grid.
     bb.place('U1', 86.825, 3.875, 270)
     bb.place('Y1', 97.6, 3.875, 180)                   # crystal on the ear-tip side (pins 44/45 face it)
+    # 0R in XTAL_P, in line with pin 45; XTAL_N (pin 44) dips under it to the crystal's lower-left pad and
+    # XTAL_IN passes between the crystal's pads to its upper-right pad
+    bb.place('R4', 94.0, 3.35, 0)
+    bb.place('C13', 100.6, 3.0, 90)                    # XTAL_IN load cap, right of the crystal (pad 1 below)
+    bb.place('C14', 96.5, 6.35, 0)                     # XTAL_N load cap, under the crystal's lower-left pad
+    bb.place('C10', 91.6, 2.7, 0)                      # CAP1, right of pin 48 (above the XTAL lines)
+    bb.place('R5', 93.0, 6.75, 0)                      # U0TXD series R, next to pin 41's escape via
+    bb.place('C9', 82.9, 6.95, 180)                    # VDD_SDIO, below the ESP32's bottom-left corner
     # antenna at the ear-tip end, along the tip axis
     s_ant = t.Lt - 1.0 - 4.6
     ax, ay = t.tip(s_ant, t.h_tip(s_ant) / 2)
@@ -48,39 +57,57 @@ def layout_main(bb):
     # ---- keep-clear rings: leave escape space around fine-pitch chips while placing passives ---------
     rings = [Polygon([(86.825 - 2.85 - 2.2, -1), (86.825 + 2.85 + 2.15, -1), (86.825 + 2.85 + 2.15, 10),
                       (86.825 - 2.85 - 2.2, 10)]),
-             Polygon([(73.5 - 2.35 - 0.6, -1), (73.5 + 2.35 + 0.6, -1), (73.5 + 2.35 + 0.6, 10),
-                      (73.5 - 2.35 - 0.6, 10)])]
+             Polygon([(19.5 - 2.35 - 0.6, 5.0 - 2.35 - 0.6), (19.5 + 2.35 + 0.6, 5.0 - 2.35 - 0.6),
+                      (19.5 + 2.35 + 0.6, 5.0 + 2.35 + 0.6), (19.5 - 2.35 - 0.6, 5.0 + 2.35 + 0.6)]),
+             Polygon([(89.3, 3.85), (93.1, 3.85), (93.1, 6.7), (89.3, 6.7)])]   # ESP32 tip-side escape stubs
     bb.keepouts += rings
 
     def near(ref, a, rots=(0, 90), **kw):
         x, y = bb.pad_pos(*a)
         bb.autoplace(ref, (x, y), rots=rots, **kw)
 
-    island = Polygon([(39.3, -0.5), (45.3, -0.5), (45.3, 2.55), (39.3, 2.55)])
-    for ref, a in [('C15', ('U1', '2')), ('L2', ('U1', '2')), ('C16', ('U1', '2')),
-                   ('C11', ('U1', '47')), ('R1', ('U1', '47')), ('C10', ('U1', '48')),
-                   ('C6', ('U1', '46')), ('C5', ('U1', '43')), ('R4', ('U1', '45')),
-                   ('C13', ('Y1', '1')), ('C14', ('Y1', '3')),
-                   ('L1', ('U1', '3')), ('C4', ('U1', '1')), ('C3', ('U1', '4')), ('C2', ('U1', '3')),
-                   ('C1', ('U1', '3')),
-                   ('C8', ('U1', '37')), ('C9', ('U1', '26')), ('C7', ('U1', '19')),
-                   ('R2', ('U1', '9')), ('C12', ('U1', '9')), ('R3', ('U1', '23')),
-                   ('R5', ('U1', '41')), ('R6', ('U1', '24')), ('R7', ('U1', '36')),
-                   ('R9', ('U1', '13')), ('R10', ('U1', '13')), ('C23', ('U1', '13')), ('R11', ('U1', '20')),
-                   ('R12', ('U1', '11')), ('R13', ('U1', '11')),
+    # RF chain in a straight line along the top edge, right of the ESP32 (LNA_IN = pin 2 at the top-right)
+    bb.place('C15', 91.95, 1.3, 90)      # shunt at LNA_IN (pad 1 on the RF line)
+    bb.place('L2', 93.42, 0.8, 0)        # series
+    bb.place('C16', 94.9, 1.3, 90)       # shunt at RF_MID
+    rf_band = Polygon([(91.5, -1), (t.Lp + 2, -1), (t.Lp + 2, 1.9), (91.5, 1.9)])
+    bb.keepouts.append(rf_band)
+
+    # placement-only keepouts: crystal corridor and the centre lane between the LDO and the ESP32, so the
+    # ESP32's support parts form two rows (top edge / bottom edge) with gaps for vias and tracks
+    xtal = Polygon([(89.3, 2.95), (99.6, 2.95), (99.6, 4.55), (89.3, 4.55)])
+    lane = Polygon([(56.5, 2.3), (81.7, 2.3), (81.7, 5.5), (56.5, 5.5)])
+    bb.keepouts += [xtal, lane]
+    bb.lane = lane
+    tip_area = (95.0, 5.6)                             # free area right of the tip-side escape stubs
+    for ref in ('C6', 'C5', 'C4'):
+        bb.autoplace(ref, tip_area, rots=(0, 90), spacing=0.45, max_r=20.0)
+    # two rows left of the ESP32 (1.4 mm pitch, so a via fits between neighbours): parts of the ESP32's top-side
+    # pins along the top edge, the rest along the bottom edge; signal pads face the centre lane
+    for i, (ref, rot) in enumerate((('L1', 90), ('C2', 90), ('C3', 90), ('C12', 90), ('R2', 270), ('C23', 90),
+                                    ('R10', 90), ('R9', 90))):
+        bb.place(ref, 81.3 - 1.4 * i, 1.05, rot)
+    for i, (ref, rot) in enumerate((('C8', 90), ('R7', 90), ('R6', 90), ('C7', 90), ('R11', 90), ('R3', 90),
+                                    ('C1', 90))):
+        bb.place(ref, 81.1 - 1.4 * i, 6.75, rot)
+    # LDO input caps on its VIN side (left), output caps on its VOUT side (right)
+    bb.place('C19', 59.9, 6.4, 90)
+    bb.place('C20', 58.4, 6.4, 90)
+    bb.place('C21', 66.1, 6.4, 90)
+    bb.place('C22', 67.5, 6.4, 90)
+    for ref, a in [('R12', ('U3', '8')), ('R13', ('U3', '8')),
                    ('C24', ('U3', '6')), ('C25', ('U3', '7')), ('C26', ('U3', '5')), ('R14', ('U3', '9')),
                    ('Q1', ('U3', '23')),
-                   ('C20', ('U2', '1')), ('C21', ('U2', '5')), ('C22', ('U2', '5')), ('C19', ('U2', '1')),
                    ('C28', ('U4', '9')), ('C27', ('U4', '10')), ('C30', ('U4', '11')), ('C29', ('U4', '11')),
                    ('U5', ('U4', '11')), ('R19', ('U4', '13')), ('R17', ('U4', '3')), ('R18', ('U4', '2')),
                    ('C33', ('U7', '5')), ('C34', ('U7', '3')), ('R20', ('Q2', '1')),
                    ('R21', ('D1', '2')), ('R22', ('J3', '1'))]:
-        near(ref, a, spacing=0.12, max_r=16.0)
-    near('C31', ('U5', '3'), spacing=0.12)
-    near('R15', ('Q1', '2'), spacing=0.12)
-    near('R16', ('Q1', '5'), spacing=0.12)
-    near('C32', ('U6', '3'), region=island)
-    for r in rings:
+        near(ref, a, spacing=0.3, max_r=16.0)
+    near('C31', ('U5', '3'), spacing=0.3)
+    near('R15', ('Q1', '2'), spacing=0.3)
+    near('R16', ('Q1', '5'), spacing=0.3)
+    near('C32', ('U6', '3'), spacing=0.3)
+    for r in rings + [xtal, lane, rf_band]:
         bb.keepouts.remove(r)
 
 
