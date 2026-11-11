@@ -2,7 +2,7 @@
 
 **Project Spectra.** AI-native AR glasses, built one version at a time. This repository holds the V1 firmware: an ESP32 heads-up display with vitals sensing that I wore as a daily driver.
 
-**Build video:** [I Built HUD Smart Glasses](https://youtu.be/5oMVqOADItA) · earlier prototypes: [Turning Normal Glasses Into a HUD](https://youtu.be/DWEKRcAdU04), [first display test](https://youtu.be/VYp-3m1mkZI)
+**Build video:** [Watch the short](https://www.youtube.com/shorts/zZ5Lkahvl9M)
 
 <p align="center">
   <img src="Screenshot%202026-02-12%20115845.png" width="560" alt="V1 wiring schematic: ESP32 with OLED, MAX30102, DHT11, TTP223 touch sensor and Bluetooth">
