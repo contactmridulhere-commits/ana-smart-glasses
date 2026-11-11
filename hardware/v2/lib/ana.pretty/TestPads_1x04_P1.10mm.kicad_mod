@@ -1,0 +1,114 @@
+(footprint "TestPads_1x04_P1.10mm"
+	(version 20241229)
+	(generator "ana_gen")
+	(generator_version "1.0")
+	(layer "F.Cu")
+	(descr "Bring-up pads 3V3 GND TX RX (pogo or wire)")
+	(tags "")
+	(property "Reference" "REF**"
+		(at 0 -1.5 0)
+		(layer "F.SilkS")
+		(uuid "f4e8e99d-d71e-5b1b-b033-888cb6f51d19")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "TestPads_1x04_P1.10mm"
+		(at 0 1.5 0)
+		(layer "F.Fab")
+		(uuid "ee19808f-330c-56df-b78b-c0856a512652")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5a054e3f-8663-5b01-b321-09f552c290aa")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9a142799-f074-5c90-a48f-44398b41c656")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Description" "Bring-up pads 3V3 GND TX RX (pogo or wire)"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "67cebef9-328f-53c6-b8d5-8381fcb91f8b")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(attr smd exclude_from_pos_files exclude_from_bom)
+	(pad "1" smd circle
+		(at -1.65 0)
+		(size 0.8 0.8)
+		(layers "F.Cu" "F.Mask")
+		(uuid "d13f47da-56ef-5e6f-bef1-6c5eda11c17f")
+	)
+	(pad "2" smd circle
+		(at -0.55 0)
+		(size 0.8 0.8)
+		(layers "F.Cu" "F.Mask")
+		(uuid "1e370873-641f-5fe1-801e-0f4d1a37328b")
+	)
+	(pad "3" smd circle
+		(at 0.55 0)
+		(size 0.8 0.8)
+		(layers "F.Cu" "F.Mask")
+		(uuid "e4f7d9cc-d398-51f5-be6e-cb2820d0c270")
+	)
+	(pad "4" smd circle
+		(at 1.65 0)
+		(size 0.8 0.8)
+		(layers "F.Cu" "F.Mask")
+		(uuid "08a17a17-c900-526b-8169-d5fd5ef97dcc")
+	)
+	(fp_circle
+		(center -1.65 -0.62)
+		(end -1.55 -0.62)
+		(stroke
+			(width 0.08)
+			(type solid)
+		)
+		(fill yes)
+		(layer "F.SilkS")
+		(uuid "ef2f3088-6d93-53dd-8b2a-3d378d95dc8d")
+	)
+	(fp_rect
+		(start -2.25 -0.8)
+		(end 2.25 0.6)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "4b5647b6-2eec-5e9c-a659-4743c0dbda71")
+	)
+	(embedded_fonts no)
+)

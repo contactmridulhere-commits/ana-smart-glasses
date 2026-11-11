@@ -1,0 +1,43 @@
+{
+    "$schema": "https://schemas.kicad.org/erc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-11-11T23:04:18+0000",
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "9.0.9",
+    "sheets": [
+        {
+            "path": "/",
+            "uuid_path": "/2c980784-3a8c-5575-81c6-52bffed38a18",
+            "violations": [
+                {
+                    "description": "Pins of type Bidirectional and Power output are connected",
+                    "items": [
+                        {
+                            "description": "Symbol U3 Pin 18 [SRB2, Bidirectional, Line]",
+                            "pos": {
+                                "x": 2.6416,
+                                "y": 2.3622
+                            },
+                            "uuid": "9e9a7ace-a506-5f89-8840-1af79eaeae99"
+                        },
+                        {
+                            "description": "Symbol #FLG02 Pin 1 [Power output, Line]",
+                            "pos": {
+                                "x": 0.5461,
+                                "y": 4.9657
+                            },
+                            "uuid": "b1613ee8-dee7-5e1f-879c-7fd3f7ab7cdc"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "pin_to_pin"
+                }
+            ]
+        }
+    ],
+    "source": "ana2-pod.kicad_sch"
+}

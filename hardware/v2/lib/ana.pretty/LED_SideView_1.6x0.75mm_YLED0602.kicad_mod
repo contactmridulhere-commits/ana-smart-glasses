@@ -1,0 +1,133 @@
+(footprint "LED_SideView_1.6x0.75mm_YLED0602"
+	(version 20241229)
+	(generator "ana_gen")
+	(generator_version "1.0")
+	(layer "F.Cu")
+	(descr "Side-view LED 1.6x0.75x1.1 mm (Yongyutai YLED0602WSIDE). Pad 1 cathode, pad 2 anode, light exits at +X edge.")
+	(tags "")
+	(property "Reference" "REF**"
+		(at 0 -1.5 0)
+		(layer "F.SilkS")
+		(uuid "f4e8e99d-d71e-5b1b-b033-888cb6f51d19")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "LED_SideView_1.6x0.75mm_YLED0602"
+		(at 0 1.5 0)
+		(layer "F.Fab")
+		(uuid "a497a539-d240-5024-9a6c-49077c196885")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5a054e3f-8663-5b01-b321-09f552c290aa")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9a142799-f074-5c90-a48f-44398b41c656")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Description" "Side-view LED 1.6x0.75x1.1 mm (Yongyutai YLED0602WSIDE). Pad 1 cathode, pad 2 anode, light exits at +X edge."
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "3bb5e1f2-463e-5e03-b01c-45cea174c923")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(attr smd)
+	(pad "1" smd rect
+		(at 0 -0.725)
+		(size 0.75 0.75)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(uuid "a4e9bd5f-37e7-58e5-af68-83faa55a2c24")
+	)
+	(pad "2" smd rect
+		(at 0 0.725)
+		(size 0.75 0.75)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(uuid "a35f224e-f8ff-5085-a59b-5dd35bb86219")
+	)
+	(fp_rect
+		(start -0.375 -0.8)
+		(end 0.725 0.8)
+		(stroke
+			(width 0.08)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "e2ecfc57-4413-5dc7-ba7e-048a57ea00f6")
+	)
+	(fp_line
+		(start 0.725 -0.5)
+		(end 0.725 0.5)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "08c9e7c5-dcfc-5bab-aa26-92d54a9a6366")
+	)
+	(fp_rect
+		(start -0.6 -1.3)
+		(end 0.95 1.3)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "6dde2357-33a8-585f-9d72-f431dccc9868")
+	)
+	(fp_line
+		(start -0.55 -1.25)
+		(end 0.3 -1.25)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "16da5d44-fafb-50b0-b59f-5ad59785b26e")
+	)
+	(fp_text user "K"
+		(at -0.9 -0.725 0)
+		(layer "F.Fab")
+		(uuid "db41eba4-3813-5a28-a29b-72db5dd6d9dd")
+		(effects
+			(font
+				(size 0.4 0.4)
+				(thickness 0.06)
+			)
+		)
+	)
+	(embedded_fonts no)
+)

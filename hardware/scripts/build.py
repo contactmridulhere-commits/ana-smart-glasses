@@ -46,6 +46,11 @@ FIRST = {'ana-main': ['LNA_IN', 'RF_MID', 'RF_FEED', 'XTAL_P', 'XTAL_IN', 'XTAL_
          'ana-power': ['VBUS', 'USB_DP', 'USB_DN', 'CC1', 'CC2', 'PROT_D', 'BATN', 'OD', 'OC', 'CS', 'DW_VCC']}
 
 
+# other board sets (hardware/v2) register here: name -> dict(outline=f(name), layout=f(bb), escapes=[refs],
+# silk=str, notes=[str]); nothing below changes for the V1 boards
+EXTRA = {}
+
+
 def log(*a):
     print(*a, flush=True)
 
@@ -71,6 +76,8 @@ def build(name, priority=()):
     if name == 'ana-main':
         notes.append('ESP32 GPIO map: OLED CLK=4 MOSI=23 CS=15 DC=26 RST=27 | I2C SDA=21 SCL=22 | MAX_INT=5 | '
                      'TOUCH=14 | BAT_ADC=33 | CHRG=13 | UART0 TX=1 RX=3 | 3V3 routed, 3V3 pour on In2')
+    if name in EXTRA:
+        notes = EXTRA[name]['notes']
     schgen.generate(name, meta['title'], meta['rev'], comps, os.path.join(d, name + '.kicad_sch'), notes)
     log(name, 'schematic written')
 
@@ -87,10 +94,10 @@ def build(name, priority=()):
         for node in net.iter('node'):
             netmap[(node.get('ref'), node.get('pin'))] = nn
     os.remove(xml)
-    temple = outline.Temple()
+    temple = EXTRA[name]['outline'](name) if name in EXTRA else outline.Temple()
     bb = pcbgen.Builder(name, temple, comps, netmap)
     bb.outline()
-    (layouts.layout_main if name == 'ana-main' else layouts.layout_power)(bb)
+    (EXTRA[name]['layout'] if name in EXTRA else layouts.layout_main if name == 'ana-main' else layouts.layout_power)(bb)
     bb.clear_silk_pads()
     log(name, 'placed', len(bb.fps), 'parts; overlaps:', bb.check_overlaps())
 
@@ -109,6 +116,9 @@ def build(name, priority=()):
     if name == 'ana-main':
         for ref in ('U4', 'U7', 'U2', 'U5', 'U6'):     # (not U1: its top/bottom bands are too thin)
             R.reserve_escapes(ref)
+    elif name in EXTRA:
+        for ref in EXTRA[name]['escapes']:                 # 'U1' or ('J8', dict(length=..., direction=...))
+            R.reserve_escapes(*((ref[0],) if isinstance(ref, tuple) else (ref,)), **(ref[1] if isinstance(ref, tuple) else {}))
     else:
         R.reserve_escapes('J1', length=0.7, direction=(0, 1))
         for ref in ('U1', 'U2', 'U3', 'Q1', 'U4', 'Q5'):
@@ -266,6 +276,12 @@ def build(name, priority=()):
         seq += [n for n in main_order + rest if n in nets and n not in seq]
         for net in seq:
             do(net)
+    elif name in EXTRA:
+        gnd_fanout(1.6)
+        rest = [n for n in nets if n not in order and n != 'GND']
+        rest.sort(key=lambda n: (0 if n in spec else 1, len(nets[n])))
+        for net in order + rest:
+            do(net)
     else:
         # CP2102N USB pins (left side): short stubs to staggered vias, so D+ and D- both reach the inner layers
         for pin, dy in (('3', -0.3), ('4', 0.3)):
@@ -412,7 +428,9 @@ def build(name, priority=()):
     log(name, 'pruned dangling copper: vias', pv, 'segments', ps, 'shortened', pt)
     R.flush()                            # routed copper -> KiCad tracks and vias
     # silkscreen labels
-    if name == 'ana-main':
+    if name in EXTRA:
+        bb.text(*EXTRA[name]['silk'], layer=pcbnew.B_SilkS, mirror=True)
+    elif name == 'ana-main':
         bb.text('ANA V1 RIGHT - ESP32 - rev 1.0', 70.0, 4.0, 0.8, layer=pcbnew.B_SilkS, mirror=True)
     else:
         bb.text('ANA V1 LEFT - POWER - rev 1.0', 70.0, 4.0, 0.8, layer=pcbnew.B_SilkS, mirror=True)

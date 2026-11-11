@@ -1,0 +1,43 @@
+{
+    "$schema": "https://schemas.kicad.org/erc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-11-11T23:03:56+0000",
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "9.0.9",
+    "sheets": [
+        {
+            "path": "/",
+            "uuid_path": "/d47fe9c9-fa96-59cd-8146-608fda088a32",
+            "violations": [
+                {
+                    "description": "Pins of type Unspecified and Power input are connected",
+                    "items": [
+                        {
+                            "description": "Symbol U7 Pin 17 [PAD, Unspecified, Line]",
+                            "pos": {
+                                "x": 3.9116,
+                                "y": 0.7239
+                            },
+                            "uuid": "a7eca05d-6314-545b-8f2e-47bb2a83ba47"
+                        },
+                        {
+                            "description": "Symbol U7 Pin 3 [GND, Power input, Line]",
+                            "pos": {
+                                "x": 3.8608,
+                                "y": 0.7239
+                            },
+                            "uuid": "d8846bd9-195c-5660-90f2-79ae4c2f0147"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "pin_to_pin"
+                }
+            ]
+        }
+    ],
+    "source": "ana2-left.kicad_sch"
+}

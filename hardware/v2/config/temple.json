@@ -1,0 +1,18 @@
+{
+  "_comment": "V2 temple cover, inside dimensions (mm). Taller and thicker than V1: the camera ribbon (11.5 mm wide) and the display cable run behind the board. Re-run hardware/v2/scripts/v2.py after changing.",
+  "A_straight_length": 105.0,
+  "B_tip_length": 40.0,
+  "theta_bend_deg": 30.0,
+  "H1_height_at_hinge": 14.0,
+  "H2_height_at_bend": 12.0,
+  "H3_height_at_tip": 10.0,
+  "T_inside_thickness": 7.0,
+  "pcb_clearance_top_bottom": 0.3,
+  "pcb_clearance_front": 0.5,
+  "pcb_clearance_tip": 0.5,
+  "pcb_thickness": 0.8,
+  "corner_radius_front": 1.0,
+  "corner_radius_tip": 2.5,
+  "bend_outer_radius": 12.0,
+  "bend_inner_radius": 6.0
+}

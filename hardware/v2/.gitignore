@@ -1,0 +1,9 @@
+*-backups/
+*.kicad_prl
+fp-info-cache
+*.lck
+_autosave-*
+*.net.xml
+fab/*/gerbers/
+__pycache__/
+*.best

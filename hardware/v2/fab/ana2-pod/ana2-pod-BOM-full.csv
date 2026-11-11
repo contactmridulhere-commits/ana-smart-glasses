@@ -1,0 +1,75 @@
+Ref,Value,Footprint,LCSC,MPN,Fitted by,Note
+J1,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"right temple, row A"
+J2,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"right temple, row B"
+J3,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"left temple, row A"
+J4,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"left temple, row B"
+J5,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"Raspberry Pi GPIO 2, 3, 4, 5, 17, 12, 13 and GND"
+J6,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"Raspberry Pi GPIO 18, 19, 20, 21, 15 (RXD), 14 (TXD), 6 and GND"
+R1,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,microphone data line pull-down (two mics share it)
+J7,5V_IN,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),5 V from the battery pack (+ / -)
+J8,USB-C,Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12,C165948,TYPE-C-31-M-12,JLCPCB,"hub USB: to a Pi USB port, or to a PC for flashing"
+R2,5.1k,Resistor_SMD:R_0402_1005Metric,C25905,,JLCPCB,
+R3,5.1k,Resistor_SMD:R_0402_1005Metric,C25905,,JLCPCB,
+U5,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,C7519,USBLC6-2SC6,JLCPCB,USB ESD
+D1,B5819WS,Diode_SMD:D_SOD-323,C64886,B5819WS,JLCPCB,USB can power the hub when the battery pack is off
+U2,AP2112K-3.3,Package_TO_SOT_SMD:SOT-23-5,C51118,AP2112K-3.3TRG1,JLCPCB,
+C1,10uF,Capacitor_SMD:C_0603_1608Metric,C380317,,JLCPCB,
+C2,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C3,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,
+C4,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+J12,BAT/EN,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),1: cell voltage for the gauge  2: enable output for the pack
+R4,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,cell voltage / 2
+R5,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,
+C5,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+J11,BUTTON,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),power / wake button
+R6,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
+U1,ESP32-S3-MINI-1-N8,RF_Module:ESP32-S2-MINI-1,C2913206,ESP32-S3-MINI-1-N8,JLCPCB,"always-on hub: power button, battery level, EEG stream, BLE"
+C6,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,
+C7,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+R7,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
+C8,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,EN delay
+J9,BOOT,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),short while plugging USB to force the bootloader
+D2,GREEN,LED_SMD:LED_0402_1005Metric,C130723,NCD0402G1,JLCPCB,status
+R8,1k,Resistor_SMD:R_0402_1005Metric,C11702,,JLCPCB,
+U3,ADS1299-4,Package_QFP:TQFP-64_10x10mm_P0.5mm,C2651574,ADS1299-4PAGR,JLCPCB,4-channel 24-bit EEG front end; inputs 1-4 against the reference on SRB1
+R10,33,Resistor_SMD:R_0402_1005Metric,C25105,,JLCPCB,analog supply filter (2 x 33R with 12 uF)
+R11,33,Resistor_SMD:R_0402_1005Metric,C25105,,JLCPCB,
+C10,10uF,Capacitor_SMD:C_0603_1608Metric,C380317,,JLCPCB,
+C11,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C12,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C13,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C14,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,AVDD1
+C15,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,DVDD
+C16,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C17,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,reference
+C18,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C19,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C20,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C21,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C22,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C23,22uF,Capacitor_SMD:C_0603_1608Metric,C109448,,JLCPCB,"VCAP1, 5 x 22 uF"
+C24,22uF,Capacitor_SMD:C_0603_1608Metric,C109448,,JLCPCB,
+C25,22uF,Capacitor_SMD:C_0603_1608Metric,C109448,,JLCPCB,
+C26,22uF,Capacitor_SMD:C_0603_1608Metric,C109448,,JLCPCB,
+C27,22uF,Capacitor_SMD:C_0603_1608Metric,C109448,,JLCPCB,
+R12,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,unused GPIO1-4
+R13,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,CLK unused
+R14,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
+R15,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,
+R16,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,mid-supply bias reference
+R17,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,
+C28,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+R18,1M,Resistor_SMD:R_0402_1005Metric,C26083,,JLCPCB,bias amplifier feedback (datasheet: 1M || 1.5 nF)
+C29,1.5nF,Capacitor_SMD:C_0402_1005Metric,C107022,,JLCPCB,
+J10,ELECTRODES,ana:WirePads_1x07_P1.50mm,,,you (wire/pad),"dry electrodes: 1 left ear tip, 2 right ear tip, 3 left temple, 4 right temple, 5 reference (nose pad), 6 bias (other nose pad), 7 cable shield"
+R20,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,input protection + RF filter
+C30,3.3nF,Capacitor_SMD:C_0402_1005Metric,C107028,,JLCPCB,
+R21,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,
+C31,3.3nF,Capacitor_SMD:C_0402_1005Metric,C107028,,JLCPCB,
+R22,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,
+C32,3.3nF,Capacitor_SMD:C_0402_1005Metric,C107028,,JLCPCB,
+R23,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,
+C33,3.3nF,Capacitor_SMD:C_0402_1005Metric,C107028,,JLCPCB,
+R24,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,
+C34,3.3nF,Capacitor_SMD:C_0402_1005Metric,C107028,,JLCPCB,
+R25,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,bias electrode drive

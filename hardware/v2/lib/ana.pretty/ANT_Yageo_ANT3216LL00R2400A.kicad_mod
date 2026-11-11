@@ -1,0 +1,139 @@
+(footprint "ANT_Yageo_ANT3216LL00R2400A"
+	(version 20241229)
+	(generator "ana_gen")
+	(generator_version "1.0")
+	(layer "F.Cu")
+	(descr "Yageo ANT3216LL00R2400A 2.4 GHz chip antenna, pad 1 = feed, pad 2 = open end with 2.5 mm tuning stub (Yageo eval layout). Keep >=2 mm ground clearance around.")
+	(tags "")
+	(property "Reference" "REF**"
+		(at 0 -1.5 0)
+		(layer "F.SilkS")
+		(uuid "f4e8e99d-d71e-5b1b-b033-888cb6f51d19")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "ANT_Yageo_ANT3216LL00R2400A"
+		(at 0 1.5 0)
+		(layer "F.Fab")
+		(uuid "c529541c-0854-53a1-a4cb-846ee4abeb53")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5a054e3f-8663-5b01-b321-09f552c290aa")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9a142799-f074-5c90-a48f-44398b41c656")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Description" "Yageo ANT3216LL00R2400A 2.4 GHz chip antenna, pad 1 = feed, pad 2 = open end with 2.5 mm tuning stub (Yageo eval layout). Keep >=2 mm ground clearance around."
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "e4fa22c2-dec6-5eee-8050-43b220e5ec49")
+		(effects
+			(font
+				(size 0.6 0.6)
+				(thickness 0.1)
+			)
+		)
+	)
+	(attr smd)
+	(pad "1" smd rect
+		(at -1.45 0)
+		(size 0.7 1.7)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(uuid "c7f29ba2-04ef-56af-b562-32bf2a9063e2")
+	)
+	(pad "2" smd rect
+		(at 1.45 0)
+		(size 0.7 1.7)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(uuid "d6f9b7e6-80ed-5fb2-bf0d-dd1ff67cfa13")
+	)
+	(pad "2" smd rect
+		(at 3.05 0)
+		(size 2.5 1)
+		(layers "F.Cu")
+		(uuid "a42158da-feb8-5490-8aba-7fe585b16b46")
+	)
+	(fp_rect
+		(start -1.6 -0.8)
+		(end 1.6 0.8)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "9f2677db-f418-5829-bd71-8cedd4d33843")
+	)
+	(fp_rect
+		(start -2.05 -1.1)
+		(end 4.55 1.1)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "861f31aa-aaf8-5cf2-ab86-1ff0053ca501")
+	)
+	(fp_line
+		(start -1 -1)
+		(end 1 -1)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "312a1c8b-9f9e-5cbb-a50d-21c5dec667b6")
+	)
+	(fp_line
+		(start -1 1)
+		(end 1 1)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "d30fe720-88bc-59f8-88ba-ccebb526e171")
+	)
+	(fp_text user "ANT"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "9ac8214d-54a6-5043-a992-2188a1bee5d4")
+		(effects
+			(font
+				(size 0.5 0.5)
+				(thickness 0.075)
+			)
+		)
+	)
+	(embedded_fonts no)
+)

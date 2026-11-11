@@ -1,0 +1,47 @@
+Ref,Value,Footprint,LCSC,MPN,Fitted by,Note
+J1,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"to the pod, row A: 5V GND SDA SCL IMU_INT PPG_INT TOUCH IR_PWM"
+J2,LINK,ana:WirePads_1x08_P1.50mm,,,you (wire/pad),"to the pod, row B: 5V GND BCLK LRCLK MIC_SD SPK_SD GND LED_PWM"
+U1,AP2112K-3.3,Package_TO_SOT_SMD:SOT-23-5,C51118,AP2112K-3.3TRG1,JLCPCB,3.3 V for the sensors and microphone
+C1,10uF,Capacitor_SMD:C_0603_1608Metric,C380317,,JLCPCB,5 V entry bulk
+C2,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C3,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,
+C4,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+U2,BNO055,Package_LGA:LGA-28_5.2x3.8mm_P0.5mm,C93216,BNO055,JLCPCB,"9-axis IMU with on-chip sensor fusion (head orientation), I2C 0x28"
+C20,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,CAP pin
+C21,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C22,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+R1,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,normal boot
+R2,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,reset pull-up
+U3,MAX30102,OptoDevice:Maxim_OLGA-14_3.3x5.6mm_P0.8mm,C6454833,MAX30102EFD+T,JLCPCB,"heart rate + SpO2, faces the skin, I2C 0x57"
+C30,10uF,Capacitor_SMD:C_0402_1005Metric,C15525,,JLCPCB,VLED+ bulk
+C31,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+C32,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+C33,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+U4,XC6206P182MR,Package_TO_SOT_SMD:SOT-23,C21659,XC6206P182MR,JLCPCB,1.8 V for the MAX30102 core
+C34,1uF,Capacitor_SMD:C_0402_1005Metric,C52923,,JLCPCB,
+R3,10k,Resistor_SMD:R_0402_1005Metric,C25744,,JLCPCB,INT pull-up
+R4,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,I2C pull-up
+R5,4.7k,Resistor_SMD:R_0402_1005Metric,C25900,,JLCPCB,I2C pull-up
+U5,TMP117,Package_SON:WSON-6-1EP_2x2mm_P0.65mm_EP1x1.6mm,C2803242,TMP117MAIDRVR,JLCPCB,"skin temperature, +-0.1 C, I2C 0x48; couple it to the skin with a metal tab or thermal pad"
+C35,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+U6,ICS-43434,Sensor_Audio:InvenSense_ICS-43434-6_3.5x2.65mm,C5656610,ICS-43434,JLCPCB,"I2S MEMS microphone, sound port through the board; this one is the right channel"
+C10,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+U7,MAX98357A,Package_DFN_QFN:TQFN-16-1EP_3x3mm_P0.5mm_EP1.23x1.23mm,C910544,MAX98357AETE+T,JLCPCB,"I2S class-D speaker amplifier, 9 dB gain (GAIN pin open)"
+R10,1M,Resistor_SMD:R_0402_1005Metric,C26083,,JLCPCB,SD_MODE = 0.45 V: plays (left + right) / 2
+C11,10uF,Capacitor_SMD:C_0603_1608Metric,C380317,,JLCPCB,
+C12,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+J5,SPEAKER,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),8 ohm micro speaker next to the ear (+ / -)
+U8,TTP223-BA6,Package_TO_SOT_SMD:SOT-23-6,C42422127,TTP223-BA6-TD,JLCPCB,touch key: output is high while touched
+C40,100nF,Capacitor_SMD:C_0402_1005Metric,C1525,,JLCPCB,
+E1,TOUCH,ana:TouchElectrode_4x10mm_Back,,,you (wire/pad),"electrode on the outer copper, touch through the cover"
+Q1,AO3400A,Package_TO_SOT_SMD:SOT-23,C20917,AO3400A,JLCPCB,IR illuminator switch (PWM)
+R20,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,off while the Pi boots
+R21,100,Resistor_SMD:R_0402_1005Metric,C25076,,JLCPCB,4 x 100R = 25R: about 80 mA through two 850 nm LEDs in series
+R22,100,Resistor_SMD:R_0402_1005Metric,C25076,,JLCPCB,
+R23,100,Resistor_SMD:R_0402_1005Metric,C25076,,JLCPCB,
+R24,100,Resistor_SMD:R_0402_1005Metric,C25076,,JLCPCB,
+J3,IR_LED,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),two 850 nm IR LEDs in series beside the camera (+ / -)
+Q2,AO3400A,Package_TO_SOT_SMD:SOT-23,C20917,AO3400A,JLCPCB,flashlight switch (PWM)
+R25,100k,Resistor_SMD:R_0402_1005Metric,C25741,,JLCPCB,
+R26,68,Resistor_SMD:R_0402_1005Metric,C25131,,JLCPCB,"white LED, about 28 mA"
+J4,WHITE_LED,ana:WirePads_1x02_P1.50mm,,,you (wire/pad),white flashlight LED at the frame corner (+ / -)
