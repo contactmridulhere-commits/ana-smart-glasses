@@ -13,29 +13,6 @@ soldered directly to the board: the ESP32 chip itself, the sensor chips, the cha
 ![Right temple, top](docs/ana-main-render-top.png)
 ![Left temple, top](docs/ana-power-render-top.png)
 
-## 3D model of the finished glasses
-
-`3d/index.html` is an interactive model of the whole pair: wayfarer front, hinges, lenses, the OLED pod with its
-45° beam splitter, both temple covers, the two real boards with every part fitted, the LiPo, the frame-link and OLED
-wiring, the flashlight LEDs and a placeholder for your Bluetooth headset module. Hover any part for its value and
-job, switch the covers between solid, see-through and off, explode it, or look through the right lens at the HUD.
-It also lists every feature and the weight breakdown (about 43 g as worn, 37–48 g depending on frame and lens
-material, without the Bluetooth module).
-
-```bash
-python3 -m http.server -d hardware/3d 8000
-```
-
-Then open http://localhost:8000 (browsers will not load the models from a `file://` page). After changing a
-board, rebuild the board models and part data with `/usr/bin/python3 hardware/3d/make_assembly.py`.
-
-![Assembled, covers on](docs/glasses-assembled.png)
-![See-through covers](docs/glasses-see-through.png)
-![Exploded](docs/glasses-exploded.png)
-![Wearer's view of the HUD](docs/glasses-wearer-view.png)
-![Right temple board in place](docs/glasses-right-temple.png)
-![Left temple board in place](docs/glasses-left-temple.png)
-
 ## Shape and size
 
 The outline comes from [`config/temple.json`](config/temple.json): the inside of the temple cover minus
